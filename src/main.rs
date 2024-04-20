@@ -58,5 +58,6 @@ fn main() -> rltk::BError {
 
     create_player(&mut gs.ecs, 40, 25);
 
+    //initial loop for game
     rltk::main_loop(context, gs)
 }
