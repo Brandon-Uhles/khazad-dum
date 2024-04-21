@@ -1,7 +1,7 @@
 // module for all components
+use rltk::RGB;
 use specs::prelude::*;
 use specs_derive::Component;
-use rltk::RGB;
 
 // example random movement component
 #[derive(Component)]
@@ -22,5 +22,3 @@ pub struct Renderable {
     pub fg: RGB,
     pub bg: RGB,
 }
-
-
