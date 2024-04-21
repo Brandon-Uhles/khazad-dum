@@ -2,19 +2,27 @@ mod ecs;
 mod input;
 mod map;
 
-use input::player_input;
 use rltk::{GameState, Rltk};
 use specs::prelude::*;
 
-use ecs::components::{LeftMover, Player, Position, Renderable};
+use ecs::components::{ Player, Position, Renderable};
 use ecs::entities::create_player;
-use ecs::systems::LeftWalker;
-use map::{draw_map, _new_map_test, TileType};
+use ecs::systems::FoVSystem;
+use input::player_input;
+use map::{Map, draw_map};
 
-use crate::map::new_map_room_and_corridors;
+use crate::ecs::components::Viewshed;
 
 pub struct State {
     ecs: World,
+}
+
+impl State {
+    fn run_systems(&mut self) {
+        let mut fov = FoVSystem{};
+        fov.run_now(&self.ecs);
+        self.ecs.maintain();
+    }
 }
 
 impl GameState for State {
@@ -24,8 +32,7 @@ impl GameState for State {
         player_input(self, ctx);
         self.run_systems();
 
-        let map = self.ecs.fetch::<Vec<TileType>>();
-        draw_map(&map, ctx);
+        draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
@@ -37,13 +44,6 @@ impl GameState for State {
     }
 }
 
-impl State {
-    fn run_systems(&mut self) {
-        let mut lw = LeftWalker {};
-        lw.run_now(&self.ecs);
-        self.ecs.maintain();
-    }
-}
 
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
@@ -56,13 +56,13 @@ fn main() -> rltk::BError {
     // tells Specs to generate storage systems for registered components
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
-    gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
-    let (rooms, map) = new_map_room_and_corridors();
+    let map : Map = Map::new_map_room_and_corridors();
+    let (player_x, player_y) = map.rooms[0].center();
+
     gs.ecs.insert(map);
-    let (player_x, player_y) = rooms[0].center();
-
     create_player(&mut gs.ecs, player_x, player_y);
 
     //initial loop for game

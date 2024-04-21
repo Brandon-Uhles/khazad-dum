@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "husky": "^9.0.11"
+  },
+
+  "scripts": {
+    "precommit": "cargo run --package commitlint-rs"
+  }
+  
+}
