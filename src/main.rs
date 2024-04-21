@@ -9,7 +9,9 @@ use specs::prelude::*;
 use ecs::components::{LeftMover, Player, Position, Renderable};
 use ecs::entities::create_player;
 use ecs::systems::LeftWalker;
-use map::{draw_map, new_map, TileType};
+use map::{draw_map, _new_map_test, TileType};
+
+use crate::map::new_map_room_and_corridors;
 
 pub struct State {
     ecs: World,
@@ -57,9 +59,11 @@ fn main() -> rltk::BError {
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
 
-    gs.ecs.insert(new_map());
+    let (rooms, map) = new_map_room_and_corridors();
+    gs.ecs.insert(map);
+    let (player_x, player_y) = rooms[0].center();
 
-    create_player(&mut gs.ecs, 40, 25);
+    create_player(&mut gs.ecs, player_x, player_y);
 
     //initial loop for game
     rltk::main_loop(context, gs)
