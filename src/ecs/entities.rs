@@ -1,7 +1,7 @@
 use rltk::RGB;
 use specs::prelude::*;
 
-use super::components::{Monster, Name, Player, Position, Renderable, Viewshed};
+use super::components::{BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, Viewshed};
 use crate::map;
 
 pub fn create_player(world: &mut World, x: i32, y: i32) {
@@ -22,6 +22,8 @@ pub fn create_player(world: &mut World, x: i32, y: i32) {
         .with(Name {
             name: "Player".to_string(),
         })
+        .with(BlocksTile{})
+        .with(CombatStats{max_hp: 30, hp: 30, defense: 2, power: 5})
         .build();
 }
 
@@ -41,6 +43,8 @@ fn create_goblin(world: &mut World, name: String, x: i32, y: i32) {
         })
         .with(Monster {})
         .with(Name { name })
+        .with(BlocksTile {})
+        .with(CombatStats{max_hp: 16, hp: 16, defense: 1, power: 4})
         .build();
 }
 
@@ -60,6 +64,8 @@ fn create_ogre(world: &mut World, name: String, x: i32, y: i32) {
         })
         .with(Monster {})
         .with(Name { name })
+        .with(BlocksTile{})
+        .with(CombatStats{max_hp: 16, hp: 16, defense: 1, power: 4})
         .build();
 }
 

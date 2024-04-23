@@ -5,13 +5,11 @@ mod map;
 use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
 
-use ecs::components::{Monster, Name, Player, Position, Renderable};
+use ecs::components::{SufferDamage, WantsToMelee, CombatStats, Viewshed, BlocksTile, Monster, Name, Player, Position, Renderable};
 use ecs::entities::{create_player, gen_mob_per_room};
-use ecs::systems;
+use ecs::systems::{self, DamageSystem};
 use input::player_input;
 use map::{draw_map, Map};
-
-use crate::ecs::components::Viewshed;
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum RunState {
@@ -29,6 +27,10 @@ impl State {
         fov.run_now(&self.ecs);
         let mut mob = systems::MonsterAI {};
         mob.run_now(&self.ecs);
+        let mut mapindex = systems::MapIndexingSystem {};
+        mapindex.run_now(&self.ecs);
+        let mut damage = DamageSystem{};
+        damage.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -39,6 +41,7 @@ impl GameState for State {
 
         if self.runstate == RunState::Running {
             self.run_systems();
+            DamageSystem::delete_dead(&mut self.ecs);
             self.runstate = RunState::Paused;
         } else {
             self.runstate = player_input(self, ctx);
@@ -78,6 +81,10 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<Name>();
+    gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<CombatStats>();
+    gs.ecs.register::<SufferDamage>();
+    gs.ecs.register::<WantsToMelee>();
 
     let map: Map = Map::new_map_room_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
