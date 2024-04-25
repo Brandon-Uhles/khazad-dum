@@ -1,10 +1,11 @@
 use rltk::RGB;
 use specs::prelude::*;
 
-use super::components::{Monster, Name, Player, Position, Renderable, Viewshed};
+use super::components::{BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, Viewshed};
 use crate::map;
 
-pub fn create_player(world: &mut World, x: i32, y: i32) {
+
+pub fn create_player(world: &mut World, x: i32, y: i32) -> Entity {
     world
         .create_entity()
         .with(Player {})
@@ -22,7 +23,8 @@ pub fn create_player(world: &mut World, x: i32, y: i32) {
         .with(Name {
             name: "Player".to_string(),
         })
-        .build();
+        .with(CombatStats{max_hp: 30, hp: 30, defense: 2, power: 5})
+        .build()
 }
 
 fn create_goblin(world: &mut World, name: String, x: i32, y: i32) {
@@ -41,6 +43,8 @@ fn create_goblin(world: &mut World, name: String, x: i32, y: i32) {
         })
         .with(Monster {})
         .with(Name { name })
+        .with(BlocksTile {})
+        .with(CombatStats{max_hp: 16, hp: 16, defense: 1, power: 4})
         .build();
 }
 
@@ -60,9 +64,13 @@ fn create_ogre(world: &mut World, name: String, x: i32, y: i32) {
         })
         .with(Monster {})
         .with(Name { name })
+        .with(BlocksTile{})
+        .with(CombatStats{max_hp: 16, hp: 16, defense: 1, power: 4})
         .build();
 }
 
+
+/// Generates mobs in each room, currently a 50% chance to spawn an ogre or goblin
 pub fn gen_mob_per_room(world: &mut World, map: &map::Map) {
     let mut rng = rltk::RandomNumberGenerator::new();
     let mut g = 1;

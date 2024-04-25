@@ -2,6 +2,10 @@ use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
+const MAP_WIDTH : usize = 80;
+const MAP_HEIGHT : usize = 43;
+const MAP_COUNT : usize = MAP_HEIGHT * MAP_WIDTH;
+
 #[derive(Default)]
 pub struct Map {
     pub tiles: Vec<TileType>,
@@ -10,6 +14,8 @@ pub struct Map {
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
+    pub blocked: Vec<bool>,
+    pub tile_content: Vec<Vec<Entity>>,
 }
 
 impl Algorithm2D for Map {
@@ -20,7 +26,35 @@ impl Algorithm2D for Map {
 
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
-        self.tiles[idx as usize] == TileType::Wall
+        self.tiles[idx] == TileType::Wall
+    }
+
+    fn get_pathing_distance(&self, idx1: usize, idx2: usize) -> f32 {
+        let w = self.width as usize;
+        let p1 = Point::new(idx1 % w, idx1 / w);
+        let p2 = Point::new(idx2 % w, idx2 / w);
+        rltk::DistanceAlg::Pythagoras.distance2d(p1, p2)
+    }
+
+    fn get_available_exits(&self, idx: usize) -> rltk::SmallVec<[(usize, f32); 10]> {
+        let mut exits = rltk::SmallVec::new();
+        let x = idx as i32 % self.width;
+        let y = idx as i32 / self.width;
+        let w = self.width as usize;
+
+        //cardinal moves
+        if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0))};
+        if self.is_exit_valid(x+1, y) {exits.push((idx + 1, 1.0))};
+        if self.is_exit_valid(x, y - 1) {exits.push((idx - w, 1.0))};
+        if self.is_exit_valid(x, y + 1) {exits.push((idx + w, 1.0))};
+
+        //diagonal moves
+        if self.is_exit_valid(x-1, y-1) {exits.push(((idx-w)-1, 1.45));}
+        if self.is_exit_valid(x+1, y-1) {exits.push(((idx-w)+1, 1.45));}
+        if self.is_exit_valid(x-1, y+1) {exits.push(((idx+w)-1, 1.45));}
+        if self.is_exit_valid(x+1, y+1) {exits.push(((idx+w)+1, 1.45));}
+
+        exits
     }
 }
 
@@ -29,7 +63,7 @@ impl Map {
         for y in room.y1 + 1..=room.y2 {
             for x in room.x1 + 1..=room.x2 {
                 let idx = self.xy_idx(x, y);
-                self.tiles[idx as usize] = TileType::Floor;
+                self.tiles[idx] = TileType::Floor;
             }
         }
     }
@@ -38,7 +72,7 @@ impl Map {
         for x in min(x1, x2)..=max(x1, x2) {
             let idx = self.xy_idx(x, y);
             if idx > 0 && idx < self.width as usize * self.height as usize {
-                self.tiles[idx as usize] = TileType::Floor;
+                self.tiles[idx] = TileType::Floor;
             }
         }
     }
@@ -47,23 +81,27 @@ impl Map {
         for y in min(y1, y2)..=max(y1, y2) {
             let idx = self.xy_idx(x, y);
             if idx > 0 && idx < self.width as usize * self.height as usize {
-                self.tiles[idx as usize] = TileType::Floor;
+                self.tiles[idx] = TileType::Floor;
             }
         }
     }
 
+    /// RNG map layout function, currently buggy
+    /// TODO: stop map gen out-of-bounds
     pub fn new_map_room_and_corridors() -> Map {
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 10;
 
         let mut map = Map {
-            tiles: vec![TileType::Wall; 80 * 50],
+            tiles: vec![TileType::Wall; MAP_COUNT],
             rooms: Vec::new(),
-            width: 80,
-            height: 50,
-            revealed_tiles: vec![false; 80 * 50],
-            visible_tiles: vec![false; 80 * 50],
+            width: MAP_WIDTH as i32,
+            height: MAP_HEIGHT as i32,
+            revealed_tiles: vec![false; MAP_COUNT],
+            visible_tiles: vec![false; MAP_COUNT],
+            blocked: vec![false; MAP_COUNT],
+            tile_content: vec![Vec::new(); MAP_COUNT],
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -71,8 +109,8 @@ impl Map {
         for _ in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, 80 - w - 1) - 1;
-            let y = rng.roll_dice(1, 50 - h - 1) - 1;
+            let x = rng.roll_dice(1, map.width - w - 1) - 1;
+            let y = rng.roll_dice(1, map.height - h - 1) - 1;
             let new_room = Rect::new(x, y, w, h);
             let mut ok = true;
             for other_room in map.rooms.iter() {
@@ -98,6 +136,24 @@ impl Map {
             }
         }
         map
+    }
+
+    fn is_exit_valid(&self, x: i32, y: i32) -> bool {
+        if x < 1 || x > self.width-1 || y < 1 || y > self.height-1 {return false; }
+        let idx = self.xy_idx(x, y);
+        !self.blocked[idx]
+    }
+
+    pub fn populate_blocked(&mut self) {
+        for (i, tile) in self.tiles.iter_mut().enumerate() {
+            self.blocked[i] = *tile == TileType::Wall;
+        }
+    }
+    
+    pub fn clear_content_index(&mut self) {
+        for content in self.tile_content.iter_mut() {
+            content.clear();
+        }
     }
 
     /// returns index of 2d map location mapped to a linear array
