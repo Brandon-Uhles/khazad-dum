@@ -18,8 +18,8 @@ pub struct CombatStats {
 pub struct Item {}
 
 #[derive(Component, Debug)]
-pub struct HealthPotion {
-    pub heal_amount : i32
+pub struct Potion {
+    pub restore_hp : i32
 }
 
 #[derive(Component, Debug)]
