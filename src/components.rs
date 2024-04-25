@@ -3,9 +3,8 @@ use rltk::RGB;
 use specs::prelude::*;
 use specs_derive::*;
 
-
 #[derive(Component, Debug)]
-pub struct BlocksTile{}
+pub struct BlocksTile {}
 
 #[derive(Component, Debug)]
 pub struct CombatStats {
@@ -14,6 +13,15 @@ pub struct CombatStats {
     pub defense: i32,
     pub power: i32,
 }
+
+#[derive(Component, Debug)]
+pub struct Item {}
+
+#[derive(Component, Debug)]
+pub struct HealthPotion {
+    pub heal_amount : i32
+}
+
 #[derive(Component, Debug)]
 pub struct Monster {}
 
@@ -41,12 +49,12 @@ pub struct Renderable {
 // subject.wantstomelee.target
 #[derive(Component, Debug, Clone)]
 pub struct WantsToMelee {
-    pub target : Entity
+    pub target: Entity,
 }
 
 #[derive(Component, Debug)]
 pub struct SufferDamage {
-    pub amount : Vec<i32>
+    pub amount: Vec<i32>,
 }
 
 impl SufferDamage {
@@ -56,12 +64,13 @@ impl SufferDamage {
         if let Some(suffering) = store.get_mut(victim) {
             suffering.amount.push(amount);
         } else {
-            let dmg = SufferDamage { amount : vec![amount]};
+            let dmg = SufferDamage {
+                amount: vec![amount],
+            };
             store.insert(victim, dmg).expect("Unable to insert damage");
         }
     }
 }
-
 
 // Viewshed stores all tiles visible to the owner before pushing them to the owner
 // dirty determines whether the viewshed has been changed and needs to be reapplied

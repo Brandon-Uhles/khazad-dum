@@ -1,30 +1,39 @@
-pub mod systems;
-pub mod input;
-pub mod map;
 pub mod components;
 pub mod entities;
-pub mod gui;
 pub mod gamelog;
+pub mod gui;
+pub mod input;
+pub mod map;
+pub mod systems;
 
 use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
 
-use components::{SufferDamage, WantsToMelee, CombatStats, Viewshed, BlocksTile, Monster, Name, Player, Position, Renderable};
-use entities::{create_player, gen_mob_per_room};
-use systems::{damage::{self, DamageSystem}, map_indexing::MapIndexingSystem, melee_combat::MeleeCombatSystem, monster_ai::MonsterAI, visibility::FoVSystem};
+use components::{
+    BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, SufferDamage, Viewshed,
+    WantsToMelee,
+};
+use entities::{create_player, spawn_room};
+use gui::draw_ui;
 use input::player_input;
 use map::{draw_map, Map};
-use gui::draw_ui;
+use systems::{
+    damage::{self, DamageSystem},
+    map_indexing::MapIndexingSystem,
+    melee_combat::MeleeCombatSystem,
+    monster_ai::MonsterAI,
+    visibility::FoVSystem,
+};
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum RunState {
     AwaitingInput,
     PreRun,
-    PlayerTurn, 
+    PlayerTurn,
     MonsterTurn,
 }
 pub struct State {
-    pub ecs: World
+    pub ecs: World,
 }
 
 impl State {
@@ -35,9 +44,9 @@ impl State {
         mob.run_now(&self.ecs);
         let mut mapindex = MapIndexingSystem {};
         mapindex.run_now(&self.ecs);
-        let mut melee = MeleeCombatSystem{};
+        let mut melee = MeleeCombatSystem {};
         melee.run_now(&self.ecs);
-        let mut damage = DamageSystem{};
+        let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
         self.ecs.maintain();
     }
@@ -53,9 +62,7 @@ impl GameState for State {
         }
 
         match newrunstate {
-            RunState::AwaitingInput => {
-                newrunstate = player_input(self, ctx)
-            }
+            RunState::AwaitingInput => newrunstate = player_input(self, ctx),
             RunState::MonsterTurn => {
                 self.run_systems();
                 newrunstate = RunState::AwaitingInput;
@@ -89,7 +96,7 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
         }
-        
+
         draw_ui(&self.ecs, ctx);
     }
 }
@@ -103,9 +110,7 @@ fn main() -> rltk::BError {
     // Adds fun scanlines and screen burn, very retro
     // TODO: Reconsider enemy colors, make scanlines & screenburn toggleable.
     context.with_post_scanlines(true);
-    let mut gs = State {
-        ecs: World::new()
-    };
+    let mut gs = State { ecs: World::new() };
 
     // tells Specs to generate storage systems for registered components
     gs.ecs.register::<Position>();
@@ -122,13 +127,19 @@ fn main() -> rltk::BError {
     let map: Map = Map::new_map_room_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
     let player = create_player(&mut gs.ecs, player_x, player_y);
-    gen_mob_per_room(&mut gs.ecs, &map);
+
+    gs.ecs.insert(rltk::RandomNumberGenerator::new());
+    for room in map.rooms.iter().skip(1) {
+        spawn_room(&mut gs.ecs, room)
+    }
 
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player);
     gs.ecs.insert(RunState::PreRun);
-    gs.ecs.insert(gamelog::GameLog {entries : vec!["Welcome to Stinky Roguelike!".to_string()]});
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["Welcome to Stinky Roguelike!".to_string()],
+    });
 
     // initial loop for game
     rltk::main_loop(context, gs)

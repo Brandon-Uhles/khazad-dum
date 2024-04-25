@@ -1,8 +1,9 @@
-use specs::prelude::*;
 use crate::{
-    components::{CombatStats, SufferDamage, Player, Name},
-    gamelog::GameLog};
+    components::{CombatStats, Name, Player, SufferDamage},
+    gamelog::GameLog,
+};
 use rltk::console;
+use specs::prelude::*;
 
 pub struct DamageSystem {}
 
@@ -12,7 +13,7 @@ impl<'a> System<'a> for DamageSystem {
         WriteStorage<'a, SufferDamage>,
     );
 
-    fn run(&mut self, data : Self::SystemData) {
+    fn run(&mut self, data: Self::SystemData) {
         let (mut stats, mut damage) = data;
 
         for (stats, damage) in (&mut stats, &damage).join() {
@@ -25,7 +26,7 @@ impl<'a> System<'a> for DamageSystem {
 
 /// delete dead entities
 pub fn delete_dead(ecs: &mut World) {
-    let mut dead : Vec<Entity> = Vec::new();
+    let mut dead: Vec<Entity> = Vec::new();
 
     {
         let combat_stats = ecs.read_storage::<CombatStats>();
@@ -48,8 +49,10 @@ pub fn delete_dead(ecs: &mut World) {
                             log.entries.push(format!("{} has died.", victim_name.name));
                         }
                         dead.push(entity)
-                    },
-                    Some(_) => {log.entries.push(format!("You died"));}
+                    }
+                    Some(_) => {
+                        log.entries.push(format!("You died"));
+                    }
                 }
             }
         }

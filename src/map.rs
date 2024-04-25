@@ -2,9 +2,9 @@ use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
-const MAP_WIDTH : usize = 80;
-const MAP_HEIGHT : usize = 43;
-const MAP_COUNT : usize = MAP_HEIGHT * MAP_WIDTH;
+pub const MAP_WIDTH: usize = 80;
+pub const MAP_HEIGHT: usize = 43;
+pub const MAP_COUNT: usize = MAP_HEIGHT * MAP_WIDTH;
 
 #[derive(Default)]
 pub struct Map {
@@ -43,16 +43,32 @@ impl BaseMap for Map {
         let w = self.width as usize;
 
         //cardinal moves
-        if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0))};
-        if self.is_exit_valid(x+1, y) {exits.push((idx + 1, 1.0))};
-        if self.is_exit_valid(x, y - 1) {exits.push((idx - w, 1.0))};
-        if self.is_exit_valid(x, y + 1) {exits.push((idx + w, 1.0))};
+        if self.is_exit_valid(x - 1, y) {
+            exits.push((idx - 1, 1.0))
+        };
+        if self.is_exit_valid(x + 1, y) {
+            exits.push((idx + 1, 1.0))
+        };
+        if self.is_exit_valid(x, y - 1) {
+            exits.push((idx - w, 1.0))
+        };
+        if self.is_exit_valid(x, y + 1) {
+            exits.push((idx + w, 1.0))
+        };
 
         //diagonal moves
-        if self.is_exit_valid(x-1, y-1) {exits.push(((idx-w)-1, 1.45));}
-        if self.is_exit_valid(x+1, y-1) {exits.push(((idx-w)+1, 1.45));}
-        if self.is_exit_valid(x-1, y+1) {exits.push(((idx+w)-1, 1.45));}
-        if self.is_exit_valid(x+1, y+1) {exits.push(((idx+w)+1, 1.45));}
+        if self.is_exit_valid(x - 1, y - 1) {
+            exits.push(((idx - w) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y - 1) {
+            exits.push(((idx - w) + 1, 1.45));
+        }
+        if self.is_exit_valid(x - 1, y + 1) {
+            exits.push(((idx + w) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y + 1) {
+            exits.push(((idx + w) + 1, 1.45));
+        }
 
         exits
     }
@@ -139,7 +155,9 @@ impl Map {
     }
 
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
-        if x < 1 || x > self.width-1 || y < 1 || y > self.height-1 {return false; }
+        if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
+            return false;
+        }
         let idx = self.xy_idx(x, y);
         !self.blocked[idx]
     }
@@ -149,7 +167,7 @@ impl Map {
             self.blocked[i] = *tile == TileType::Wall;
         }
     }
-    
+
     pub fn clear_content_index(&mut self) {
         for content in self.tile_content.iter_mut() {
             content.clear();

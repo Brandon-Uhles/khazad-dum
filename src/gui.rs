@@ -6,7 +6,6 @@ use crate::{
 use rltk::{Rltk, RGB};
 use specs::prelude::*;
 
-
 // Draws UI element over screen
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     // TODO: Explore other UI shapes & features
