@@ -1,11 +1,13 @@
-use crate::ecs::systems::try_move_player;
+use crate::systems::player::try_move_player;
 use crate::{RunState, State};
 use rltk::{Rltk, VirtualKeyCode};
 
+
+/// tracks player input. TODO: add controller support
 pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     //player movement
     match ctx.key {
-        None => return RunState::Paused,
+        None => return RunState::AwaitingInput,
         Some(key) => match key {
             VirtualKeyCode::Left |
             VirtualKeyCode::Numpad4 |
@@ -35,8 +37,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::Numpad1 |
             VirtualKeyCode::B => try_move_player(-1, 1, &mut gs.ecs),
-            _ => return RunState::Paused,
+            _ => return RunState::AwaitingInput,
         },
     }
-    RunState::Running
+    RunState::PlayerTurn
 }

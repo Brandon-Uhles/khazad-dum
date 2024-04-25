@@ -1,7 +1,8 @@
 // module for all components
 use rltk::RGB;
-use specs::{prelude::*, storage::GenericReadStorage};
+use specs::prelude::*;
 use specs_derive::*;
+
 
 #[derive(Component, Debug)]
 pub struct BlocksTile{}
@@ -37,6 +38,7 @@ pub struct Renderable {
     pub bg: RGB,
 }
 
+// subject.wantstomelee.target
 #[derive(Component, Debug, Clone)]
 pub struct WantsToMelee {
     pub target : Entity
@@ -48,6 +50,8 @@ pub struct SufferDamage {
 }
 
 impl SufferDamage {
+    /// if the entity has suffered damage this turn, push new damage into amount vector.
+    /// if the entity has not suffered damage, generate new damage vector, apply damage, and store vector in writestorage
     pub fn new_damage(store: &mut WriteStorage<SufferDamage>, victim: Entity, amount: i32) {
         if let Some(suffering) = store.get_mut(victim) {
             suffering.amount.push(amount);
@@ -58,6 +62,9 @@ impl SufferDamage {
     }
 }
 
+
+// Viewshed stores all tiles visible to the owner before pushing them to the owner
+// dirty determines whether the viewshed has been changed and needs to be reapplied
 #[derive(Component)]
 pub struct Viewshed {
     pub visible_tiles: Vec<rltk::Point>,

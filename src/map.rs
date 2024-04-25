@@ -2,6 +2,10 @@ use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
+const MAP_WIDTH : usize = 80;
+const MAP_HEIGHT : usize = 43;
+const MAP_COUNT : usize = MAP_HEIGHT * MAP_WIDTH;
+
 #[derive(Default)]
 pub struct Map {
     pub tiles: Vec<TileType>,
@@ -22,7 +26,7 @@ impl Algorithm2D for Map {
 
 impl BaseMap for Map {
     fn is_opaque(&self, idx: usize) -> bool {
-        self.tiles[idx as usize] == TileType::Wall
+        self.tiles[idx] == TileType::Wall
     }
 
     fn get_pathing_distance(&self, idx1: usize, idx2: usize) -> f32 {
@@ -59,7 +63,7 @@ impl Map {
         for y in room.y1 + 1..=room.y2 {
             for x in room.x1 + 1..=room.x2 {
                 let idx = self.xy_idx(x, y);
-                self.tiles[idx as usize] = TileType::Floor;
+                self.tiles[idx] = TileType::Floor;
             }
         }
     }
@@ -68,7 +72,7 @@ impl Map {
         for x in min(x1, x2)..=max(x1, x2) {
             let idx = self.xy_idx(x, y);
             if idx > 0 && idx < self.width as usize * self.height as usize {
-                self.tiles[idx as usize] = TileType::Floor;
+                self.tiles[idx] = TileType::Floor;
             }
         }
     }
@@ -77,25 +81,27 @@ impl Map {
         for y in min(y1, y2)..=max(y1, y2) {
             let idx = self.xy_idx(x, y);
             if idx > 0 && idx < self.width as usize * self.height as usize {
-                self.tiles[idx as usize] = TileType::Floor;
+                self.tiles[idx] = TileType::Floor;
             }
         }
     }
 
+    /// RNG map layout function, currently buggy
+    /// TODO: stop map gen out-of-bounds
     pub fn new_map_room_and_corridors() -> Map {
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 10;
 
         let mut map = Map {
-            tiles: vec![TileType::Wall; 80 * 50],
+            tiles: vec![TileType::Wall; MAP_COUNT],
             rooms: Vec::new(),
-            width: 80,
-            height: 50,
-            revealed_tiles: vec![false; 80 * 50],
-            visible_tiles: vec![false; 80 * 50],
-            blocked: vec![false; 80 * 50],
-            tile_content: vec![Vec::new(); 80*50],
+            width: MAP_WIDTH as i32,
+            height: MAP_HEIGHT as i32,
+            revealed_tiles: vec![false; MAP_COUNT],
+            visible_tiles: vec![false; MAP_COUNT],
+            blocked: vec![false; MAP_COUNT],
+            tile_content: vec![Vec::new(); MAP_COUNT],
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -103,8 +109,8 @@ impl Map {
         for _ in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, 80 - w - 1) - 1;
-            let y = rng.roll_dice(1, 50 - h - 1) - 1;
+            let x = rng.roll_dice(1, map.width - w - 1) - 1;
+            let y = rng.roll_dice(1, map.height - h - 1) - 1;
             let new_room = Rect::new(x, y, w, h);
             let mut ok = true;
             for other_room in map.rooms.iter() {
