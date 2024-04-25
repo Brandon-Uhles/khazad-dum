@@ -15,6 +15,11 @@ pub struct CombatStats {
 }
 
 #[derive(Component, Debug)]
+pub struct InBackpack {
+    pub owner : Entity
+}
+
+#[derive(Component, Debug)]
 pub struct Item {}
 
 #[derive(Component, Debug)]
@@ -50,6 +55,12 @@ pub struct Renderable {
 #[derive(Component, Debug, Clone)]
 pub struct WantsToMelee {
     pub target: Entity,
+}
+
+#[derive(Component, Debug, Clone)]
+pub struct WantsToPickupItem {
+    pub acquired_by : Entity,
+    pub item : Entity,
 }
 
 #[derive(Component, Debug)]

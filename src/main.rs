@@ -11,7 +11,7 @@ use specs::prelude::*;
 
 use components::{
     BlocksTile, CombatStats, Monster, Name, Player, Position, Renderable, SufferDamage, Viewshed,
-    WantsToMelee, Item, Potion
+    WantsToMelee, Item, Potion, WantsToPickupItem, InBackpack
 };
 use entities::{create_player, spawn_room};
 use gui::draw_ui;
@@ -23,6 +23,7 @@ use systems::{
     melee_combat::MeleeCombatSystem,
     monster_ai::MonsterAI,
     visibility::FoVSystem,
+    inventory::ItemCollectionSystem,
 };
 
 #[derive(Copy, Clone, PartialEq)]
@@ -31,6 +32,7 @@ pub enum RunState {
     PreRun,
     PlayerTurn,
     MonsterTurn,
+    ShowInventory,
 }
 pub struct State {
     pub ecs: World,
@@ -48,6 +50,8 @@ impl State {
         melee.run_now(&self.ecs);
         let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
+        let mut item_collection = ItemCollectionSystem {};
+        item_collection.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -74,6 +78,20 @@ impl GameState for State {
             RunState::PreRun => {
                 self.run_systems();
                 newrunstate = RunState::AwaitingInput;
+            }
+            RunState::ShowInventory => {
+                let result = gui::show_inventory(self, ctx);
+                match result.0 {
+                    gui::ItemMenuResult::Cancel => newrunstate = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {},
+                    gui::ItemMenuResult::Selected => {
+                        let item = result.1.unwrap();
+                        let names = self.ecs.read_storage::<Name>();
+                        let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
+                        gamelog.entries.push(format!("You try to use {}, but it isn't written yet.", names.get(item).unwrap().name));
+                        newrunstate = RunState::AwaitingInput;
+                    }
+                }
             }
         }
 
@@ -124,7 +142,9 @@ fn main() -> rltk::BError {
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<Item>();
-    gs.ecs.register::<Potion>();
+    gs.ecs.register::<Potion>(); 
+    gs.ecs.register::<WantsToPickupItem>();
+    gs.ecs.register::<InBackpack>();
 
     let map: Map = Map::new_map_room_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
