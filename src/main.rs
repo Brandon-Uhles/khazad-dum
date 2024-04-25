@@ -97,9 +97,12 @@ impl GameState for State {
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
     // generates 80x50 terminal screen w/ title "Roguelike Test"
-    let context = RltkBuilder::simple80x50()
+    let mut context = RltkBuilder::simple80x50()
         .with_title("Roguelike Test")
         .build()?;
+    // Adds fun scanlines and screen burn, very retro
+    // TODO: Reconsider enemy colors, make scanlines & screenburn toggleable.
+    context.with_post_scanlines(true);
     let mut gs = State {
         ecs: World::new()
     };
