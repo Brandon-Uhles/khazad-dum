@@ -3,6 +3,8 @@ pub mod input;
 pub mod map;
 pub mod components;
 pub mod entities;
+pub mod gui;
+pub mod gamelog;
 
 use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
@@ -12,6 +14,7 @@ use entities::{create_player, gen_mob_per_room};
 use systems::{damage::{self, DamageSystem}, map_indexing::MapIndexingSystem, melee_combat::MeleeCombatSystem, monster_ai::MonsterAI, visibility::FoVSystem};
 use input::player_input;
 use map::{draw_map, Map};
+use gui::draw_ui;
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum RunState {
@@ -86,6 +89,8 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
         }
+        
+        draw_ui(&self.ecs, ctx);
     }
 }
 
@@ -120,6 +125,7 @@ fn main() -> rltk::BError {
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player);
     gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(gamelog::GameLog {entries : vec!["Welcome to Stinky Roguelike!".to_string()]});
 
     // initial loop for game
     rltk::main_loop(context, gs)
