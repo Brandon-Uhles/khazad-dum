@@ -1,6 +1,9 @@
-use specs::prelude::*;
-use crate::components::{CombatStats, SufferDamage, Player};
+use crate::{
+    components::{CombatStats, Name, Player, SufferDamage},
+    gamelog::GameLog,
+};
 use rltk::console;
+use specs::prelude::*;
 
 pub struct DamageSystem {}
 
@@ -10,7 +13,7 @@ impl<'a> System<'a> for DamageSystem {
         WriteStorage<'a, SufferDamage>,
     );
 
-    fn run(&mut self, data : Self::SystemData) {
+    fn run(&mut self, data: Self::SystemData) {
         let (mut stats, mut damage) = data;
 
         for (stats, damage) in (&mut stats, &damage).join() {
@@ -23,12 +26,14 @@ impl<'a> System<'a> for DamageSystem {
 
 /// delete dead entities
 pub fn delete_dead(ecs: &mut World) {
-    let mut dead : Vec<Entity> = Vec::new();
+    let mut dead: Vec<Entity> = Vec::new();
 
     {
         let combat_stats = ecs.read_storage::<CombatStats>();
         let players = ecs.read_storage::<Player>();
         let entities = ecs.entities();
+        let names = ecs.read_storage::<Name>();
+        let mut log = ecs.write_resource::<GameLog>();
 
         // gathers all entities with combat_stats and loops through each
         // if entity.hp < 1, check to see if the entity is the player.
@@ -38,8 +43,16 @@ pub fn delete_dead(ecs: &mut World) {
             if stats.hp < 1 {
                 let player = players.get(entity);
                 match player {
-                    None => dead.push(entity),
-                    Some(_) => console::log("You died")
+                    None => {
+                        let victim_name = names.get(entity);
+                        if let Some(victim_name) = victim_name {
+                            log.entries.push(format!("{} has died.", victim_name.name));
+                        }
+                        dead.push(entity)
+                    }
+                    Some(_) => {
+                        log.entries.push(format!("You died"));
+                    }
                 }
             }
         }
