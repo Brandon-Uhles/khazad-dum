@@ -4,7 +4,13 @@ use specs::prelude::*;
 use specs_derive::*;
 
 #[derive(Component, Debug)]
+pub struct AreaOfAffect {
+    pub radius : i32,
+}
+
+#[derive(Component, Debug)]
 pub struct BlocksTile {}
+
 
 #[derive(Component, Debug)]
 pub struct CombatStats {
@@ -14,16 +20,29 @@ pub struct CombatStats {
     pub power: i32,
 }
 
+#[derive(Component, Debug)] 
+pub struct Confusion {
+    pub turns: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct Consumable {}
+
 #[derive(Component, Debug)]
 pub struct InBackpack {
     pub owner: Entity,
 }
 
 #[derive(Component, Debug)]
+pub struct InflictsDamage {
+    pub damage: i32,
+}
+
+#[derive(Component, Debug)]
 pub struct Item {}
 
 #[derive(Component, Debug)]
-pub struct Potion {
+pub struct ProvidesHealing {
     pub restore_hp: i32,
 }
 
@@ -44,19 +63,26 @@ pub struct Position {
     pub y: i32,
 }
 
+#[derive(Component, Debug)]
+pub struct Ranged {
+    pub range: i32,
+}
+
 #[derive(Component)]
 pub struct Renderable {
     pub glyph: rltk::FontCharType,
     pub fg: RGB,
     pub bg: RGB,
-    pub render_order : i32
+    pub render_order: i32,
 }
 #[derive(Component, Debug)]
-pub struct WantsToDrinkPotion {
-    pub potion: Entity,
-}#[derive(Component, Debug)]
+pub struct WantsToUseItem {
+    pub item: Entity,
+    pub target: Option<rltk::Point>
+}
+#[derive(Component, Debug)]
 pub struct WantsToDropItem {
-    pub item : Entity
+    pub item: Entity,
 }
 
 // subject.wantstomelee.target
