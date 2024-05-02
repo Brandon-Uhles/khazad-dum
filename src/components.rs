@@ -16,7 +16,7 @@ pub struct CombatStats {
 
 #[derive(Component, Debug)]
 pub struct InBackpack {
-    pub owner : Entity
+    pub owner: Entity,
 }
 
 #[derive(Component, Debug)]
@@ -24,7 +24,7 @@ pub struct Item {}
 
 #[derive(Component, Debug)]
 pub struct Potion {
-    pub restore_hp : i32
+    pub restore_hp: i32,
 }
 
 #[derive(Component, Debug)]
@@ -49,6 +49,14 @@ pub struct Renderable {
     pub glyph: rltk::FontCharType,
     pub fg: RGB,
     pub bg: RGB,
+    pub render_order : i32
+}
+#[derive(Component, Debug)]
+pub struct WantsToDrinkPotion {
+    pub potion: Entity,
+}#[derive(Component, Debug)]
+pub struct WantsToDropItem {
+    pub item : Entity
 }
 
 // subject.wantstomelee.target
@@ -59,8 +67,8 @@ pub struct WantsToMelee {
 
 #[derive(Component, Debug, Clone)]
 pub struct WantsToPickupItem {
-    pub acquired_by : Entity,
-    pub item : Entity,
+    pub acquired_by: Entity,
+    pub item: Entity,
 }
 
 #[derive(Component, Debug)]
