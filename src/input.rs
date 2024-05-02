@@ -1,4 +1,3 @@
-use crate::components::Item;
 use crate::gui::ItemMenuResult;
 use crate::systems::{inventory::get_item, player::try_move_player};
 use crate::{RunState, State};
