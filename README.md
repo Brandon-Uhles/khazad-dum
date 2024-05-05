@@ -1,6 +1,7 @@
 # The Depths of Khazad-dûm
 
 Welcome to The Depths of Khazad-dûm, a text-based dungeon exploration game set in the vast underground kingdom of Khazad-dum, inspired by J.R.R. Tolkien's Mines of Moria.
+(This project is currently just me running through the bracket-lib tutorial, I'll put my own work in later)
 
 ## Overview
 
