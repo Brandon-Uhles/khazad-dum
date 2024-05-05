@@ -195,8 +195,15 @@ impl GameState for State {
                     MainMenuResult::NoSelection { selected } => newrunstate = RunState::MainMenu { menu_selection: selected },
                     MainMenuResult::Selected { selected } =>{
                         match selected {
-                            MainMenuSelection::NewGame => newrunstate = RunState::PreRun,
-                            MainMenuSelection::LoadGame => newrunstate = RunState::PreRun,
+                            MainMenuSelection::NewGame => {
+                                newrunstate = RunState::PreRun;
+                                saveload::delete_save();
+                            }
+                            MainMenuSelection::LoadGame => {
+                                saveload::load_game(&mut self.ecs);
+                                newrunstate = RunState::AwaitingInput;
+                                saveload::delete_save();
+                            }
                             MainMenuSelection::Quit => {std::process::exit(0);}
                         }
                     }

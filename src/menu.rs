@@ -5,9 +5,10 @@ use {BTerm, VirtualKeyCode, RGB};
 
 
 pub fn main_menu(gs: &mut State, ctx: &mut BTerm) -> MainMenuResult {
+    let save_exists = crate::systems::saveload::does_save_exist();
     let runstate = gs.ecs.fetch::<RunState>();
 
-    ctx.print_color_centered(15, RGB::named(YELLOW), RGB::named(BLACK), "Roguelike!");
+
 
     if let RunState::MainMenu { menu_selection : selection } = *runstate {
         if selection == MainMenuSelection::NewGame {
@@ -34,20 +35,27 @@ pub fn main_menu(gs: &mut State, ctx: &mut BTerm) -> MainMenuResult {
                 match key {
                     VirtualKeyCode::Escape => {return MainMenuResult::NoSelection { selected: MainMenuSelection::Quit }}
                     VirtualKeyCode::Up => {
-                        let newselection;
+                        let mut newselection;
                             match selection {
                                 MainMenuSelection::NewGame => newselection = MainMenuSelection::Quit,
                                 MainMenuSelection::LoadGame => newselection = MainMenuSelection::NewGame,
                                 MainMenuSelection::Quit => newselection = MainMenuSelection::LoadGame
                             }
+
+                            if newselection == MainMenuSelection::LoadGame && !save_exists {
+                                newselection = MainMenuSelection::NewGame;
+                            }
                         return MainMenuResult::NoSelection { selected : newselection }
                     }
                     VirtualKeyCode::Down => {
-                        let newselection;
+                        let mut newselection;
                         match selection {
                             MainMenuSelection::NewGame => newselection = MainMenuSelection::LoadGame,
                             MainMenuSelection::LoadGame => newselection = MainMenuSelection::Quit,
                             MainMenuSelection::Quit => newselection = MainMenuSelection::NewGame 
+                        }
+                        if newselection == MainMenuSelection::LoadGame && !save_exists {
+                            newselection = MainMenuSelection::Quit;
                         }
                             return MainMenuResult::NoSelection { selected: newselection }
                     }
