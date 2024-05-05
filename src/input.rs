@@ -1,4 +1,5 @@
 use crate::gui::ItemMenuResult;
+use crate::map::try_next_level;
 use crate::systems::{inventory::get_item, player::try_move_player};
 use crate::{RunState, State};
 use bracket_lib::prelude::*;
@@ -42,6 +43,13 @@ pub fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
             VirtualKeyCode::I => return RunState::ShowInventory,
 
             VirtualKeyCode::Escape => return RunState::SaveGame,
+
+            //Level change
+            VirtualKeyCode::Period => {
+                if try_next_level(&mut gs.ecs) {
+                    return RunState::NextLevel;
+                }
+            }
 
             _ => return RunState::AwaitingInput,
         },

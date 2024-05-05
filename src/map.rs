@@ -2,6 +2,7 @@ use bracket_lib::prelude::*;
 use {Algorithm2D, BaseMap, Point, RandomNumberGenerator, BTerm, RGB};
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
+use crate::gamelog::GameLog;
 use std::cmp::{max, min};
 
 pub const MAP_WIDTH: usize = 80;
@@ -17,6 +18,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+    pub depth : i32,
 
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
@@ -109,7 +111,7 @@ impl Map {
 
     /// RNG map layout function, currently buggy
     /// TODO: stop map gen out-of-bounds
-    pub fn new_map_room_and_corridors() -> Map {
+    pub fn new_map_room_and_corridors(new_depth : i32) -> Map {
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 10;
@@ -123,6 +125,7 @@ impl Map {
             visible_tiles: vec![false; MAP_COUNT],
             blocked: vec![false; MAP_COUNT],
             tile_content: vec![Vec::new(); MAP_COUNT],
+            depth: new_depth
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -156,6 +159,11 @@ impl Map {
                 map.rooms.push(new_room);
             }
         }
+
+        let stairs_position = map.rooms[map.rooms.len() - 1].center();
+        let stairs_idx = map.xy_idx(stairs_position.0, stairs_position.1);
+        map.tiles[stairs_idx] = TileType::DownStairs;
+
         map
     }
 
@@ -189,6 +197,7 @@ impl Map {
 pub enum TileType {
     Wall,
     Floor,
+    DownStairs
 }
 
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -237,6 +246,10 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
                     fg = RGB::from_f32(0., 1.0, 0.);
                     glyph = to_cp437('#');
                 }
+                TileType::DownStairs => {
+                    fg = RGB::from_f32(0., 1.0, 1.0);
+                    glyph = to_cp437('>');
+                }
             }
             if !map.visible_tiles[idx] {
                 fg = fg.to_greyscale()
@@ -248,5 +261,19 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
             x = 0;
             y += 1;
         }
+    }
+}
+
+pub fn try_next_level(world: &mut World) -> bool {
+    let player_pos = world.fetch::<Point>();
+    let map = world.fetch::<Map>();
+    let player_idx = map.xy_idx(player_pos.x, player_pos.y);
+
+    if map.tiles[player_idx] == TileType::DownStairs {
+        true
+    } else {
+        let mut gamelog = world.write_resource::<GameLog>();
+        gamelog.entries.push("There is no way down from here.".to_string());
+        false
     }
 }
