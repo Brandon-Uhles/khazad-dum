@@ -1,6 +1,6 @@
 use crate::components::{CombatStats, Player, Position, Viewshed, WantsToMelee};
 use crate::Map;
-use rltk::{console, Point};
+use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
 

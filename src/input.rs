@@ -1,11 +1,11 @@
 use crate::gui::ItemMenuResult;
 use crate::systems::{inventory::get_item, player::try_move_player};
 use crate::{RunState, State};
-use rltk::{Rltk, VirtualKeyCode};
+use bracket_lib::prelude::*;
 use specs::prelude::*;
 
 /// tracks player input. TODO: add controller support
-pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
+pub fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
     //player movement
     match ctx.key {
         None => return RunState::AwaitingInput,
@@ -40,8 +40,8 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::G => get_item(&mut gs.ecs),
 
             VirtualKeyCode::I => return RunState::ShowInventory,
-            
 
+            VirtualKeyCode::Escape => return RunState::SaveGame,
 
             _ => return RunState::AwaitingInput,
         },
@@ -50,7 +50,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 }
 
 pub fn menu_input(
-    ctx: &mut Rltk,
+    ctx: &mut BTerm,
     count: usize,
     equippable: &mut Vec<Entity>,
 ) -> (ItemMenuResult, Option<Entity>) {
@@ -59,7 +59,7 @@ pub fn menu_input(
         Some(key) => match key {
             VirtualKeyCode::Escape => (ItemMenuResult::Cancel, None),
             _ => {
-                let selection = rltk::letter_to_option(key);
+                let selection = letter_to_option(key);
                 if selection > -1 && selection < count as i32 {
                     return (
                         ItemMenuResult::Selected,

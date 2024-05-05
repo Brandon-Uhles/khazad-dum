@@ -1,6 +1,6 @@
 use crate::components::{Player, Position, Viewshed};
 use crate::Map;
-use rltk::{field_of_view, Point};
+use bracket_lib::prelude::*;
 use specs::prelude::*;
 
 pub struct FoVSystem {}

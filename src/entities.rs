@@ -1,8 +1,12 @@
-use rltk::{RandomNumberGenerator, RGB};
-use specs::prelude::*;
+use bracket_lib::prelude::*;
+use specs::{
+    prelude::*,
+    saveload::{SimpleMarker, MarkedBuilder}
+};
 
 use crate::components::{
-    BlocksTile, CombatStats, Item, Monster, Name, Player, Position, ProvidesHealing, Renderable, Viewshed, Consumable, Ranged, InflictsDamage, AreaOfAffect, Confusion
+    AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, InflictsDamage, Item, Monster,
+    Name, Player, Position, ProvidesHealing, Ranged, Renderable, Viewshed, SerializeMe
 };
 use crate::map::{Rect, MAP_WIDTH};
 
@@ -15,9 +19,9 @@ pub fn create_player(world: &mut World, x: i32, y: i32) -> Entity {
         .with(Player {})
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
+            glyph: to_cp437('@'),
+            fg: RGB::named(YELLOW),
+            bg: RGB::named(BLACK),
             render_order: 0,
         })
         .with(Viewshed {
@@ -34,24 +38,25 @@ pub fn create_player(world: &mut World, x: i32, y: i32) -> Entity {
             defense: 2,
             power: 5,
         })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
 
 fn create_ogre(world: &mut World, x: i32, y: i32) {
-    mob_gen(world, x, y, rltk::to_cp437('o'), "Ogre");
+    mob_gen(world, x, y, to_cp437('o'), "Ogre");
 }
 fn create_goblin(world: &mut World, x: i32, y: i32) {
-    mob_gen(world, x, y, rltk::to_cp437('g'), "Goblin");
+    mob_gen(world, x, y, to_cp437('g'), "Goblin");
 }
 
-fn mob_gen<S: ToString>(world: &mut World, x: i32, y: i32, glyph: rltk::FontCharType, name: S) {
+fn mob_gen<S: ToString>(world: &mut World, x: i32, y: i32, glyph: FontCharType, name: S) {
     world
         .create_entity()
         .with(Position { x, y })
         .with(Renderable {
             glyph: glyph,
-            fg: RGB::named(rltk::RED),
-            bg: RGB::named(rltk::BLACK),
+            fg: RGB::named(RED),
+            bg: RGB::named(BLACK),
             render_order: 1,
         })
         .with(Viewshed {
@@ -70,6 +75,7 @@ fn mob_gen<S: ToString>(world: &mut World, x: i32, y: i32, glyph: rltk::FontChar
             defense: 1,
             power: 4,
         })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -142,10 +148,10 @@ fn random_item(world: &mut World, x: i32, y: i32) {
         roll = rng.roll_dice(1, 4);
     }
     match roll {
-        1 => {health_potion(world, x, y)}
-        2 => {magic_missile_scroll(world, x, y)}
-        3 => {fireball_scroll(world, x, y)}
-        _ => {confusion_scroll(world, x, y)}
+        1 => health_potion(world, x, y),
+        2 => magic_missile_scroll(world, x, y),
+        3 => fireball_scroll(world, x, y),
+        _ => confusion_scroll(world, x, y),
     }
 }
 
@@ -154,9 +160,9 @@ fn health_potion(world: &mut World, x: i32, y: i32) {
         .create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437('i'),
-            fg: RGB::named(rltk::MAGENTA),
-            bg: RGB::named(rltk::BLACK),
+            glyph: to_cp437('i'),
+            fg: RGB::named(MAGENTA),
+            bg: RGB::named(BLACK),
             render_order: 2,
         })
         .with(Name {
@@ -164,58 +170,71 @@ fn health_potion(world: &mut World, x: i32, y: i32) {
         })
         .with(Item {})
         .with(ProvidesHealing { restore_hp: 8 })
-        .with(Consumable{})
+        .with(Consumable {})
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
 fn magic_missile_scroll(world: &mut World, x: i32, y: i32) {
-    world.create_entity()
-    .with(Position {x, y})
-    .with(Renderable{
-        glyph: rltk::to_cp437(')'),
-        fg: RGB::named(rltk::CYAN),
-        bg: RGB::named(rltk::BLACK),
-        render_order: 2
-    })
-    .with(Name {name: "Scroll of Magic Missile".to_string()})
-    .with(Item{})
-    .with(Consumable{})
-    .with(Ranged {range: 6})
-    .with(InflictsDamage{damage: 8})
-    .build();
+    world
+        .create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: to_cp437(')'),
+            fg: RGB::named(CYAN),
+            bg: RGB::named(BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Scroll of Magic Missile".to_string(),
+        })
+        .with(Item {})
+        .with(Consumable {})
+        .with(Ranged { range: 6 })
+        .with(InflictsDamage { damage: 8 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
 }
 
 fn fireball_scroll(world: &mut World, x: i32, y: i32) {
-    world.create_entity()
-    .with(Position{x, y})
-    .with(Renderable {
-        glyph: rltk::to_cp437(')'),
-        fg: RGB::named(rltk::ORANGE),
-        bg: RGB::named(rltk::BLACK),
-        render_order: 2
-    })
-    .with(Name {name: "Scroll of Fireball".to_string()})
-    .with(Item{})
-    .with(Consumable{})
-    .with(Ranged {range: 6})
-    .with(InflictsDamage{damage: 20})
-    .with(AreaOfAffect{radius: 3})
-    .build();
+    world
+        .create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: to_cp437(')'),
+            fg: RGB::named(ORANGE),
+            bg: RGB::named(BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Scroll of Fireball".to_string(),
+        })
+        .with(Item {})
+        .with(Consumable {})
+        .with(Ranged { range: 6 })
+        .with(InflictsDamage { damage: 20 })
+        .with(AreaOfEffect { radius: 3 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
 }
 
 fn confusion_scroll(world: &mut World, x: i32, y: i32) {
-    world.create_entity()
-    .with(Position{x, y})
-    .with(Renderable {
-        glyph: rltk::to_cp437(')'),
-        fg: RGB::named(rltk::GREEN),
-        bg: RGB::named(rltk::BLACK),
-        render_order: 2
-    })
-    .with(Name{ name : "Scroll of Confusion".to_string()})
-    .with(Item{})
-    .with(Consumable{})
-    .with(Ranged {range: 6})
-    .with(Confusion {turns: 4})
-    .build();
+    world
+        .create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: to_cp437(')'),
+            fg: RGB::named(GREEN),
+            bg: RGB::named(BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Scroll of Confusion".to_string(),
+        })
+        .with(Item {})
+        .with(Consumable {})
+        .with(Ranged { range: 6 })
+        .with(Confusion { turns: 4 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
 }
