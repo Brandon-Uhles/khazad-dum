@@ -183,6 +183,10 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
         RGB::named(BLACK),
     );
 
+    let map = ecs.fetch::<Map>();
+    let depth = format!("Depth: {}", map.depth);
+    ctx.print_color(2, 43, RGB::named(YELLOW), RGB::named(BLACK), &depth);
+
     let combat_stats = ecs.read_storage::<CombatStats>();
     let players = ecs.read_storage::<Player>();
     // Grabs health, displays both numerically and with a bar.
