@@ -12,7 +12,7 @@ pub const MAP_COUNT: usize = MAP_HEIGHT * MAP_WIDTH;
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct Map {
     pub tiles: Vec<TileType>,
-    pub rooms: Vec<Rect>,
+    pub rooms: Vec<Rectangle>,
     pub width: i32,
     pub height: i32,
     pub revealed_tiles: Vec<bool>,
@@ -82,7 +82,7 @@ impl BaseMap for Map {
 }
 
 impl Map {
-    fn apply_room_to_map(&mut self, room: &Rect) {
+    fn apply_room_to_map(&mut self, room: &Rectangle) {
         for y in room.y1 + 1..=room.y2 {
             for x in room.x1 + 1..=room.x2 {
                 let idx = self.xy_idx(x, y);
@@ -135,7 +135,7 @@ impl Map {
             let h = rng.range(MIN_SIZE, MAX_SIZE);
             let x = rng.roll_dice(1, map.width - w - 1) - 1;
             let y = rng.roll_dice(1, map.height - h - 1) - 1;
-            let new_room = Rect::new(x, y, w, h);
+            let new_room = Rectangle::new(x, y, w, h);
             let mut ok = true;
             for other_room in map.rooms.iter() {
                 if new_room.intersect(other_room) {
@@ -201,16 +201,16 @@ pub enum TileType {
 }
 
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
-pub struct Rect {
+pub struct Rectangle {
     pub x1: i32,
     pub x2: i32,
     pub y1: i32,
     pub y2: i32,
 }
 
-impl Rect {
-    pub fn new(x: i32, y: i32, w: i32, h: i32) -> Rect {
-        Rect {
+impl Rectangle {
+    pub fn new(x: i32, y: i32, w: i32, h: i32) -> Rectangle {
+        Rectangle {
             x1: x,
             y1: y,
             x2: x + w,
@@ -218,7 +218,7 @@ impl Rect {
         }
     }
 
-    pub fn intersect(&self, other: &Rect) -> bool {
+    pub fn intersect(&self, other: &Rectangle) -> bool {
         self.x1 <= other.x2 && self.x2 >= other.x1 && self.y1 <= other.y2 && self.y2 >= other.y1
     }
 

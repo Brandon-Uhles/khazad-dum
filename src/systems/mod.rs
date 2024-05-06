@@ -7,3 +7,5 @@ pub mod monster_ai;
 pub mod player;
 pub mod visibility;
 pub mod saveload;
+pub mod spawner;
+pub mod spawn_table;

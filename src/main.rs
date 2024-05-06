@@ -18,13 +18,13 @@ use specs::{
 };
 
 use components::*;
-use entities::{create_player, spawn_room};
+use entities::create_player;
 use gui::{draw_ui, drop_item_menu, ranged_target, ItemMenuResult, MainMenuResult, MainMenuSelection};
 use input::player_input;
 use map::{draw_map, Map};
 use systems::{
-    damage::{self, DamageSystem}, inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem}, map_indexing::MapIndexingSystem, melee_combat::MeleeCombatSystem, monster_ai::MonsterAI, player, saveload, visibility::FoVSystem
-};
+    damage::{self, DamageSystem}, inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem}, map_indexing::MapIndexingSystem, melee_combat::MeleeCombatSystem, monster_ai::MonsterAI, player, saveload, visibility::FoVSystem,
+spawner::*};
 use gamelog::GameLog;
 use menu::main_menu;
 
@@ -104,15 +104,16 @@ impl State {
 
         // build new map, place player
         let worldmap;
+        let current_depth;
         {
             let mut worldmap_resource = self.ecs.write_resource::<Map>();
-            let current_depth = worldmap_resource.depth;
+            current_depth = worldmap_resource.depth;
             *worldmap_resource = Map::new_map_room_and_corridors(current_depth + 1);
             worldmap = worldmap_resource.clone();
         }
 
         for room in worldmap.rooms.iter().skip(1) {
-            entities::spawn_room(&mut self.ecs, room);
+            spawn_room(&mut self.ecs, room, current_depth + 1);
         }
 
         let (player_x, player_y) = worldmap.rooms[0].center();
@@ -344,7 +345,7 @@ fn main() -> BError {
 
     gs.ecs.insert(RandomNumberGenerator::new());
     for room in map.rooms.iter().skip(1) {
-        spawn_room(&mut gs.ecs, room)
+        spawn_room(&mut gs.ecs, room, 1)
     }
 
     gs.ecs.insert(map);
