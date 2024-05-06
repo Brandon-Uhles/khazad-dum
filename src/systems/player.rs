@@ -1,5 +1,5 @@
 use crate::components::{CombatStats, Player, Position, Viewshed, WantsToMelee};
-use crate::Map;
+use crate::{Map, Monster, RunState};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -55,4 +55,33 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
             player_pos.y = pos.y;
         }
     }
+}
+
+pub fn skip_turn(world: &mut World) -> RunState {
+    let player_entity = world.fetch::<Entity>();
+    let viewshed_components = world.read_storage::<Viewshed>();
+    let mobs =  world.read_storage::<Monster>();
+
+    let worldmap_resource = world.fetch::<Map>();
+
+    let mut can_heal = true;
+    let viewshed = viewshed_components.get(*player_entity).unwrap();
+    for tile in viewshed.visible_tiles.iter() {
+        let idx = worldmap_resource.xy_idx(tile.x, tile.y);
+        for entity_id in worldmap_resource.tile_content[idx].iter() {
+            let mob = mobs.get(*entity_id);
+            match mob {
+                None => {}
+                Some(_) => {can_heal = false;}
+            }
+        }
+    }
+
+    if can_heal {
+        let mut health_components = world.write_storage::<CombatStats>();
+        let player_hp = health_components.get_mut(*player_entity).unwrap();
+        player_hp.hp = i32::min(player_hp.hp + 1, player_hp.max_hp);
+    }
+    return RunState::PlayerTurn;
+
 }

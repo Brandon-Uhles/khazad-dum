@@ -1,9 +1,10 @@
 use crate::gui::ItemMenuResult;
 use crate::map::try_next_level;
-use crate::systems::{inventory::get_item, player::try_move_player};
+use crate::systems::{inventory::get_item, player::{try_move_player, skip_turn}};
 use crate::{RunState, State};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
+
 
 /// tracks player input. TODO: add controller support
 pub fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
@@ -44,13 +45,15 @@ pub fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
 
             VirtualKeyCode::Escape => return RunState::SaveGame,
 
+            // Skip turn
+            VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => return skip_turn(&mut gs.ecs),
+
             //Level change
             VirtualKeyCode::Period => {
                 if try_next_level(&mut gs.ecs) {
                     return RunState::NextLevel;
                 }
             }
-
             _ => return RunState::AwaitingInput,
         },
     }
