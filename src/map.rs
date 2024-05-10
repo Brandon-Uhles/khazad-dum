@@ -2,7 +2,10 @@ use crate::gamelog::GameLog;
 use bracket_lib::prelude::*;
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
-use std::cmp::{max, min};
+use std::{
+    cmp::{max, min},
+    collections::HashSet
+    };
 use {Algorithm2D, BTerm, BaseMap, Point, RandomNumberGenerator, RGB};
 
 pub const MAP_WIDTH: usize = 80;
@@ -19,6 +22,7 @@ pub struct Map {
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
     pub depth: i32,
+    pub bloodstains : HashSet<usize>,
 
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
@@ -126,7 +130,9 @@ impl Map {
             blocked: vec![false; MAP_COUNT],
             tile_content: vec![Vec::new(); MAP_COUNT],
             depth: new_depth,
+            bloodstains: HashSet::new(),
         };
+
 
         let mut rng = RandomNumberGenerator::new();
 
@@ -237,6 +243,8 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
         if map.revealed_tiles[idx] {
             let glyph;
             let mut fg;
+            let mut bg = RGB::from_f32(0., 0., 0.);
+
             match tile {
                 TileType::Floor => {
                     fg = RGB::from_f32(0.0, 0.5, 0.5);
@@ -251,10 +259,12 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
                     glyph = to_cp437('>');
                 }
             }
+            if map.bloodstains.contains(&idx) {bg = RGB::from_f32(0.75, 0., 0.)}
             if !map.visible_tiles[idx] {
-                fg = fg.to_greyscale()
+                fg = fg.to_greyscale();
+                bg = RGB::from_f32(0., 0., 0.);
             }
-            ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
+            ctx.set(x, y, fg, bg, glyph);
         }
         x += 1;
         if x > 79 {
