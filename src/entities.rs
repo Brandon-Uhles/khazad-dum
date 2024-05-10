@@ -1,12 +1,15 @@
 use bracket_lib::prelude::*;
 use specs::{
     prelude::*,
-    saveload::{SimpleMarker, MarkedBuilder}
+    saveload::{MarkedBuilder, SimpleMarker},
 };
 
-use crate::components::{
-    AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, InflictsDamage, Item, Monster,
-    Name, Player, Position, ProvidesHealing, Ranged, Renderable, Viewshed, SerializeMe
+use crate::{
+    components::{
+        AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, InflictsDamage, Item,
+        Monster, Name, Player, Position, ProvidesHealing, Ranged, Renderable, SerializeMe,
+        Viewshed,
+    }, DefenseBonus, EquipmentSlot, Equippable, MeleePowerBonus
 };
 
 pub const MAX_MOBS: i32 = 4;
@@ -158,6 +161,51 @@ pub fn confusion_scroll(world: &mut World, x: i32, y: i32) {
         .with(Consumable {})
         .with(Ranged { range: 6 })
         .with(Confusion { turns: 4 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+pub fn dagger(world: &mut World, x: i32, y: i32) {
+    world
+        .create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: to_cp437('/'),
+            fg: RGB::named(CYAN),
+            bg: RGB::named(BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Dagger".to_string(),
+        })
+        .with(Item {})
+        .with(Ranged { range: 6 })
+        .with(Equippable {
+            slot: EquipmentSlot::Melee,
+        })
+        .with(MeleePowerBonus { power: 2 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+pub fn shield(world: &mut World, x: i32, y: i32) {
+    world
+        .create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: to_cp437('('),
+            fg: RGB::named(CYAN),
+            bg: RGB::named(BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Shield".to_string(),
+        })
+        .with(Item {})
+        .with(Equippable {
+            slot: EquipmentSlot::Shield,
+        })
+        .with(DefenseBonus { defense: 1 }  )
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

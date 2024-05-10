@@ -1,9 +1,9 @@
+use crate::gamelog::GameLog;
 use bracket_lib::prelude::*;
-use {Algorithm2D, BaseMap, Point, RandomNumberGenerator, BTerm, RGB};
 use serde::{Deserialize, Serialize};
 use specs::prelude::*;
-use crate::gamelog::GameLog;
 use std::cmp::{max, min};
+use {Algorithm2D, BTerm, BaseMap, Point, RandomNumberGenerator, RGB};
 
 pub const MAP_WIDTH: usize = 80;
 pub const MAP_HEIGHT: usize = 43;
@@ -18,7 +18,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
-    pub depth : i32,
+    pub depth: i32,
 
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
@@ -95,7 +95,7 @@ impl Map {
         for x in min(x1, x2)..=max(x1, x2) {
             let idx = self.xy_idx(x, y);
             if idx > 0 && idx < self.width as usize * self.height as usize {
-                self.tiles[idx] = TileType::Floor;
+                self.tiles[idx as usize] = TileType::Floor;
             }
         }
     }
@@ -104,14 +104,14 @@ impl Map {
         for y in min(y1, y2)..=max(y1, y2) {
             let idx = self.xy_idx(x, y);
             if idx > 0 && idx < self.width as usize * self.height as usize {
-                self.tiles[idx] = TileType::Floor;
+                self.tiles[idx as usize] = TileType::Floor;
             }
         }
     }
 
     /// RNG map layout function, currently buggy
     /// TODO: stop map gen out-of-bounds
-    pub fn new_map_room_and_corridors(new_depth : i32) -> Map {
+    pub fn new_map_room_and_corridors(new_depth: i32) -> Map {
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 10;
@@ -125,7 +125,7 @@ impl Map {
             visible_tiles: vec![false; MAP_COUNT],
             blocked: vec![false; MAP_COUNT],
             tile_content: vec![Vec::new(); MAP_COUNT],
-            depth: new_depth
+            depth: new_depth,
         };
 
         let mut rng = RandomNumberGenerator::new();
@@ -197,7 +197,7 @@ impl Map {
 pub enum TileType {
     Wall,
     Floor,
-    DownStairs
+    DownStairs,
 }
 
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
@@ -273,7 +273,9 @@ pub fn try_next_level(world: &mut World) -> bool {
         true
     } else {
         let mut gamelog = world.write_resource::<GameLog>();
-        gamelog.entries.push("There is no way down from here.".to_string());
+        gamelog
+            .entries
+            .push("There is no way down from here.".to_string());
         false
     }
 }

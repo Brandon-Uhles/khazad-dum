@@ -1,10 +1,16 @@
-use bracket_lib::terminal::Point;
-use specs::{prelude::*, saveload::{MarkedBuilder, SerializeComponents, DeserializeComponents, SimpleMarker, SimpleMarkerAllocator}};
-use std::{convert::Infallible, fs};
-use crate::{components::*};
+use crate::components::*;
 use crate::World;
+use bracket_lib::terminal::Point;
+use specs::{
+    prelude::*,
+    saveload::{
+        DeserializeComponents, MarkedBuilder, SerializeComponents, SimpleMarker,
+        SimpleMarkerAllocator,
+    },
+};
 use std::fs::File;
 use std::path::Path;
+use std::{convert::Infallible, fs};
 
 macro_rules! serialize_individually {
     ($ecs:expr, $ser:expr, $data:expr, $( $type:ty),*) => {
@@ -41,26 +47,55 @@ pub fn save_game(world: &mut World) {
     let mapcopy = world.get_mut::<crate::map::Map>().unwrap().clone();
     let savehelper = world
         .create_entity()
-        .with(SerializationHelper{map : mapcopy})
+        .with(SerializationHelper { map: mapcopy })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 
     {
-        let data = (world.entities(), world.read_storage::<SimpleMarker<SerializeMe>>());
+        let data = (
+            world.entities(),
+            world.read_storage::<SimpleMarker<SerializeMe>>(),
+        );
 
         let writer = File::create("./savegame.json").unwrap();
-        let mut serializer =serde_json::Serializer::new(writer);
-        serialize_individually!(world, serializer, data, Position, Renderable, Player, Viewshed, Monster, Name, BlocksTile, CombatStats, SufferDamage, WantsToMelee, 
-            Item, Consumable, Ranged, InflictsDamage, AreaOfEffect, Confusion, ProvidesHealing, InBackpack, WantsToPickupItem, WantsToUseItem,
-            WantsToDropItem, SerializationHelper);
+        let mut serializer = serde_json::Serializer::new(writer);
+        serialize_individually!(
+            world,
+            serializer,
+            data,
+            Position,
+            Renderable,
+            Player,
+            Viewshed,
+            Monster,
+            Name,
+            BlocksTile,
+            CombatStats,
+            SufferDamage,
+            WantsToMelee,
+            Item,
+            Consumable,
+            Ranged,
+            InflictsDamage,
+            AreaOfEffect,
+            Confusion,
+            ProvidesHealing,
+            InBackpack,
+            WantsToPickupItem,
+            WantsToUseItem,
+            WantsToDropItem,
+            SerializationHelper,
+            Equippable,
+            Equipped,
+            MeleePowerBonus,
+            DefenseBonus
+        );
     }
     world.delete_entity(savehelper).expect("Crash on cleanup");
 }
 
 #[cfg(target_arch = "wasm32")]
-pub fn save_game(_world: &mut World) {
-    
-}
+pub fn save_game(_world: &mut World) {}
 
 pub fn load_game(world: &mut World) {
     // Delete everything
@@ -77,16 +112,47 @@ pub fn load_game(world: &mut World) {
         let mut de = serde_json::Deserializer::from_str(&data);
 
         {
-            let mut d = (&mut world.entities(), &mut world.write_storage::<SimpleMarker<SerializeMe>>(), &mut world.write_resource::<SimpleMarkerAllocator<SerializeMe>>());
+            let mut d = (
+                &mut world.entities(),
+                &mut world.write_storage::<SimpleMarker<SerializeMe>>(),
+                &mut world.write_resource::<SimpleMarkerAllocator<SerializeMe>>(),
+            );
 
-            deserialize_individually!(world, de, d, Position, Renderable, Player, Viewshed, Monster, 
-                Name, BlocksTile, CombatStats, SufferDamage, WantsToMelee, Item, Consumable, Ranged, InflictsDamage, 
-                AreaOfEffect, Confusion, ProvidesHealing, InBackpack, WantsToPickupItem, WantsToUseItem,
-                WantsToDropItem, SerializationHelper);
+            deserialize_individually!(
+                world,
+                de,
+                d,
+                Position,
+                Renderable,
+                Player,
+                Viewshed,
+                Monster,
+                Name,
+                BlocksTile,
+                CombatStats,
+                SufferDamage,
+                WantsToMelee,
+                Item,
+                Consumable,
+                Ranged,
+                InflictsDamage,
+                AreaOfEffect,
+                Confusion,
+                ProvidesHealing,
+                InBackpack,
+                WantsToPickupItem,
+                WantsToUseItem,
+                WantsToDropItem,
+                SerializationHelper,
+                Equippable,
+                Equipped,
+                MeleePowerBonus,
+                DefenseBonus
+            );
         }
 
-        let mut deleteme : Option<Entity> = None;
-        
+        let mut deleteme: Option<Entity> = None;
+
         {
             let entities = world.entities();
             let helper = world.read_storage::<SerializationHelper>();
@@ -98,22 +164,24 @@ pub fn load_game(world: &mut World) {
                 *worldmap = helper.map.clone();
                 worldmap.tile_content = vec![Vec::new(); crate::map::MAP_COUNT];
                 deleteme = Some(entity);
-            } 
-            for(entity, _player, pos) in (&entities, &player, &position).join() {
+            }
+            for (entity, _player, pos) in (&entities, &player, &position).join() {
                 let mut ppos = world.write_resource::<Point>();
                 *ppos = Point::new(pos.x, pos.y);
                 let mut player_resource = world.write_resource::<Entity>();
                 *player_resource = entity;
             }
         }
-        world.delete_entity(deleteme.unwrap()).expect("Unable to delete helper");
+        world
+            .delete_entity(deleteme.unwrap())
+            .expect("Unable to delete helper");
     }
-
-
 }
 
 pub fn delete_save() {
-    if Path::new("./savegame.json").exists() {std::fs::remove_file("./savegame.json").expect("Unable to delete file")}
+    if Path::new("./savegame.json").exists() {
+        std::fs::remove_file("./savegame.json").expect("Unable to delete file")
+    }
 }
 pub fn does_save_exist() -> bool {
     Path::new("./savegame.json").exists()

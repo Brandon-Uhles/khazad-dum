@@ -70,13 +70,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Optio
         .join()
         .filter(|item| item.1.owner == *player_entity)
     {
-        ctx.set(
-            17,
-            y,
-            RGB::named(WHITE),
-            RGB::named(BLACK),
-            to_cp437('('),
-        );
+        ctx.set(17, y, RGB::named(WHITE), RGB::named(BLACK), to_cp437('('));
         ctx.set(
             18,
             y,
@@ -84,13 +78,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Optio
             RGB::named(BLACK),
             97 + j as FontCharType,
         );
-        ctx.set(
-            19,
-            y,
-            RGB::named(WHITE),
-            RGB::named(BLACK),
-            to_cp437(')'),
-        );
+        ctx.set(19, y, RGB::named(WHITE), RGB::named(BLACK), to_cp437(')'));
 
         ctx.print(21, y, &name.name.to_string());
         equippable.push(entity);
@@ -141,13 +129,7 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Optio
         .join()
         .filter(|item| item.1.owner == *player_entity)
     {
-        ctx.set(
-            17,
-            y,
-            RGB::named(WHITE),
-            RGB::named(BLACK),
-            to_cp437('('),
-        );
+        ctx.set(17, y, RGB::named(WHITE), RGB::named(BLACK), to_cp437('('));
         ctx.set(
             18,
             y,
@@ -155,13 +137,7 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Optio
             RGB::named(BLACK),
             97 + j as FontCharType,
         );
-        ctx.set(
-            19,
-            y,
-            RGB::named(WHITE),
-            RGB::named(BLACK),
-            to_cp437(')'),
-        );
+        ctx.set(19, y, RGB::named(WHITE), RGB::named(BLACK), to_cp437(')'));
 
         ctx.print(21, y, &name.name.to_string());
         equippable.push(entity);
@@ -174,14 +150,7 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut BTerm) -> (ItemMenuResult, Optio
 // Draws UI element over screen
 pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
     // TODO: Explore other UI shapes & features
-    ctx.draw_box(
-        0,
-        43,
-        79,
-        6,
-        RGB::named(WHITE),
-        RGB::named(BLACK),
-    );
+    ctx.draw_box(0, 43, 79, 6, RGB::named(WHITE), RGB::named(BLACK));
 
     let map = ecs.fetch::<Map>();
     let depth = format!("Depth: {}", map.depth);
@@ -193,13 +162,7 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
     // TODO: Rework healthbar
     for (_player, stats) in (&players, &combat_stats).join() {
         let health = format!("HP: {} / {}", stats.hp, stats.max_hp);
-        ctx.print_color(
-            12,
-            43,
-            RGB::named(YELLOW),
-            RGB::named(BLACK),
-            &health,
-        );
+        ctx.print_color(12, 43, RGB::named(YELLOW), RGB::named(BLACK), &health);
 
         ctx.draw_bar_horizontal(
             28,
@@ -267,13 +230,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut BTerm) {
             let left_x = mouse_pos.0 - width;
             let mut y = mouse_pos.1;
             for s in tooltip.iter() {
-                ctx.print_color(
-                    left_x,
-                    y,
-                    RGB::named(WHITE),
-                    RGB::named(DARKGRAY),
-                    s,
-                );
+                ctx.print_color(left_x, y, RGB::named(WHITE), RGB::named(DARKGRAY), s);
                 let padding = (width - s.len() as i32) - 1;
                 for i in 0..padding {
                     ctx.print_color(
@@ -299,13 +256,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut BTerm) {
             let left_x = mouse_pos.0 + 3;
             let mut y = mouse_pos.1;
             for s in tooltip.iter() {
-                ctx.print_color(
-                    left_x + 1,
-                    y,
-                    RGB::named(WHITE),
-                    RGB::named(DARKGRAY),
-                    s,
-                );
+                ctx.print_color(left_x + 1, y, RGB::named(WHITE), RGB::named(DARKGRAY), s);
                 let padding = (width - s.len() as i32) - 1;
                 for i in 0..padding {
                     ctx.print_color(
@@ -338,13 +289,7 @@ pub fn ranged_target(
     let player_pos = gs.ecs.fetch::<Point>();
     let viewsheds = gs.ecs.read_storage::<Viewshed>();
 
-    ctx.print_color(
-        5,
-        0,
-        RGB::named(YELLOW),
-        RGB::named(BLACK),
-        "Select Target",
-    );
+    ctx.print_color(5, 0, RGB::named(YELLOW), RGB::named(BLACK), "Select Target");
 
     //highlights available targets
     let mut available_tiles = Vec::new();

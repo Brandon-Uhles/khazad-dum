@@ -1,13 +1,15 @@
 // module for all components
 use bracket_lib::prelude::*;
-use specs::{
-    prelude::*,
-    saveload::ConvertSaveload,
-    error::NoError,
-    saveload::Marker,
-};
+use serde::{Deserialize, Serialize};
+use specs::{prelude::*, saveload::ConvertSaveload, saveload::Marker};
 use specs_derive::*;
-use serde::{Serialize, Deserialize};
+use std::convert::Infallible as NoError;
+
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
+pub enum EquipmentSlot {
+    Melee,
+    Shield,
+}
 
 #[derive(Component, ConvertSaveload, Clone, Debug)]
 pub struct AreaOfEffect {
@@ -32,6 +34,17 @@ pub struct Confusion {
 
 #[derive(Component, Serialize, Deserialize, Clone, Debug)]
 pub struct Consumable {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Equippable {
+    pub slot: EquipmentSlot,
+}
+
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct Equipped {
+    pub owner: Entity,
+    pub slot: EquipmentSlot,
+}
 
 #[derive(Component, Debug, ConvertSaveload)]
 pub struct InBackpack {
@@ -85,7 +98,7 @@ pub struct SerializeMe;
 
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct SerializationHelper {
-    pub map : crate::map::Map
+    pub map: crate::map::Map,
 }
 
 #[derive(Component, Debug, ConvertSaveload)]
@@ -108,6 +121,16 @@ pub struct WantsToMelee {
 pub struct WantsToPickupItem {
     pub acquired_by: Entity,
     pub item: Entity,
+}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone )]
+pub struct MeleePowerBonus {
+    pub power : i32
+}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone )]
+pub struct DefenseBonus {
+    pub defense: i32,
 }
 
 #[derive(Component, ConvertSaveload, Clone, Debug)]

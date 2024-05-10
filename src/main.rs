@@ -4,29 +4,39 @@ pub mod gamelog;
 pub mod gui;
 pub mod input;
 pub mod map;
-pub mod systems;
 pub mod menu;
+pub mod systems;
 
-extern crate serde;
 extern crate bracket_lib;
+extern crate serde;
 
 use bracket_lib::prelude::*;
 
 use specs::{
     prelude::*,
-    saveload::{SimpleMarker, SimpleMarkerAllocator}, storage::GenericReadStorage
+    saveload::{SimpleMarker, SimpleMarkerAllocator},
+    storage::GenericReadStorage,
 };
 
 use components::*;
 use entities::create_player;
-use gui::{draw_ui, drop_item_menu, ranged_target, ItemMenuResult, MainMenuResult, MainMenuSelection};
+use gamelog::GameLog;
+use gui::{
+    draw_ui, drop_item_menu, ranged_target, ItemMenuResult, MainMenuResult, MainMenuSelection,
+};
 use input::player_input;
 use map::{draw_map, Map};
-use systems::{
-    damage::{self, DamageSystem}, inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem}, map_indexing::MapIndexingSystem, melee_combat::MeleeCombatSystem, monster_ai::MonsterAI, player, saveload, visibility::FoVSystem,
-spawner::*};
-use gamelog::GameLog;
 use menu::main_menu;
+use systems::{
+    damage::{self, DamageSystem},
+    inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem},
+    map_indexing::MapIndexingSystem,
+    melee_combat::MeleeCombatSystem,
+    monster_ai::MonsterAI,
+    player, saveload,
+    spawner::*,
+    visibility::FoVSystem,
+};
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum RunState {
@@ -71,8 +81,9 @@ impl State {
         let player = self.ecs.read_storage::<Player>();
         let backpack = self.ecs.read_storage::<InBackpack>();
         let player_entity = self.ecs.fetch::<Entity>();
+        let equipped = self.ecs.read_storage::<Equipped>();
 
-        let mut to_delete : Vec<Entity> = Vec::new();
+        let mut to_delete: Vec<Entity> = Vec::new();
         for entity in entities.join() {
             let mut should_delete = true;
 
@@ -88,9 +99,16 @@ impl State {
                 }
             }
 
+            let eq = equipped.get(entity);
+            if let Some(eq) = eq {
+                if eq.owner == *player_entity {
+                    should_delete = false;
+                }
+            }
+
             if should_delete {
                 to_delete.push(entity);
-            }            
+            }
         }
         to_delete
     }
@@ -99,7 +117,9 @@ impl State {
         // delete all non-player & player-item entities
         let to_delete = self.entities_to_remove_on_level_change();
         for entity in to_delete {
-            self.ecs.delete_entity(entity).expect("Unable to delete entity");
+            self.ecs
+                .delete_entity(entity)
+                .expect("Unable to delete entity");
         }
 
         // build new map, place player
@@ -127,7 +147,7 @@ impl State {
             player_pos_comp.y = player_y;
         }
 
-        // set viewshed to dirty 
+        // set viewshed to dirty
         let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
         let vs = viewshed_components.get_mut(*player_entity);
         if let Some(vs) = vs {
@@ -136,13 +156,14 @@ impl State {
 
         //Notify player, give small health bump
         let mut gamelog = self.ecs.fetch_mut::<GameLog>();
-        gamelog.entries.push("You descend further into the mountain. Take a moment to rest.".to_string());
+        gamelog
+            .entries
+            .push("You descend further into the mountain. Take a moment to rest.".to_string());
         let mut player_health_store = self.ecs.write_storage::<CombatStats>();
         let player_health = player_health_store.get_mut(*player_entity);
         if let Some(player_health) = player_health {
             player_health.hp = i32::max(player_health.hp, player_health.max_hp / 2)
         }
-
     }
 }
 
@@ -156,7 +177,7 @@ impl GameState for State {
 
         ctx.cls();
         match newrunstate {
-            RunState::MainMenu { .. } => {},
+            RunState::MainMenu { .. } => {}
             _ => {
                 draw_map(&self.ecs, ctx);
 
@@ -164,10 +185,10 @@ impl GameState for State {
                     let positions = self.ecs.read_storage::<Position>();
                     let renderables = self.ecs.read_storage::<Renderable>();
                     let map = self.ecs.fetch::<Map>();
-        
+
                     let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
                     data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-        
+
                     for (pos, render) in data.iter() {
                         let idx = map.xy_idx(pos.x, pos.y);
                         if map.visible_tiles[idx] {
@@ -178,7 +199,6 @@ impl GameState for State {
                 }
             }
         }
-
 
         match newrunstate {
             RunState::AwaitingInput => newrunstate = player_input(self, ctx),
@@ -266,26 +286,32 @@ impl GameState for State {
             RunState::MainMenu { .. } => {
                 let result = main_menu(self, ctx);
                 match result {
-                    MainMenuResult::NoSelection { selected } => newrunstate = RunState::MainMenu { menu_selection: selected },
-                    MainMenuResult::Selected { selected } =>{
-                        match selected {
-                            MainMenuSelection::NewGame => {
-                                newrunstate = RunState::PreRun;
-                                saveload::delete_save();
-                            }
-                            MainMenuSelection::LoadGame => {
-                                saveload::load_game(&mut self.ecs);
-                                newrunstate = RunState::AwaitingInput;
-                                saveload::delete_save();
-                            }
-                            MainMenuSelection::Quit => {std::process::exit(0);}
+                    MainMenuResult::NoSelection { selected } => {
+                        newrunstate = RunState::MainMenu {
+                            menu_selection: selected,
                         }
                     }
+                    MainMenuResult::Selected { selected } => match selected {
+                        MainMenuSelection::NewGame => {
+                            newrunstate = RunState::PreRun;
+                            saveload::delete_save();
+                        }
+                        MainMenuSelection::LoadGame => {
+                            saveload::load_game(&mut self.ecs);
+                            newrunstate = RunState::AwaitingInput;
+                            saveload::delete_save();
+                        }
+                        MainMenuSelection::Quit => {
+                            std::process::exit(0);
+                        }
+                    },
                 }
             }
             RunState::SaveGame => {
                 saveload::save_game(&mut self.ecs);
-                newrunstate = RunState::MainMenu { menu_selection: MainMenuSelection::LoadGame }
+                newrunstate = RunState::MainMenu {
+                    menu_selection: MainMenuSelection::LoadGame,
+                }
             }
 
             RunState::NextLevel => {
@@ -336,6 +362,10 @@ fn main() -> BError {
     gs.ecs.register::<Confusion>();
     gs.ecs.register::<SimpleMarker<SerializeMe>>();
     gs.ecs.register::<SerializationHelper>();
+    gs.ecs.register::<Equippable>();
+    gs.ecs.register::<Equipped>();
+    gs.ecs.register::<MeleePowerBonus>();
+    gs.ecs.register::<DefenseBonus>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
@@ -355,7 +385,6 @@ fn main() -> BError {
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to Stinky Roguelike!".to_string()],
     });
- 
 
     // initial loop for game
     main_loop(context, gs)

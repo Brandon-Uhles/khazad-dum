@@ -1,10 +1,12 @@
 use crate::gui::ItemMenuResult;
 use crate::map::try_next_level;
-use crate::systems::{inventory::get_item, player::{try_move_player, skip_turn}};
+use crate::systems::{
+    inventory::get_item,
+    player::{skip_turn, try_move_player},
+};
 use crate::{RunState, State};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
-
 
 /// tracks player input. TODO: add controller support
 pub fn player_input(gs: &mut State, ctx: &mut BTerm) -> RunState {
