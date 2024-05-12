@@ -5,11 +5,7 @@ use specs::{
 };
 
 use crate::{
-    components::{
-        AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, InflictsDamage, Item,
-        Monster, Name, Player, Position, ProvidesHealing, Ranged, Renderable, SerializeMe,
-        Viewshed,
-    }, DefenseBonus, EquipmentSlot, Equippable, MeleePowerBonus
+        AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable, HungerClock, HungerState::*, InflictsDamage, Item, MeleePowerBonus, Monster, Name, Player, Position, ProvidesFood, ProvidesHealing, Ranged, Renderable, SerializeMe, Viewshed
 };
 
 pub const MAX_MOBS: i32 = 4;
@@ -40,6 +36,7 @@ pub fn create_player(world: &mut World, x: i32, y: i32) -> Entity {
             defense: 2,
             power: 5,
         })
+        .with(HungerClock { state: WellFed, duration: 20 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
@@ -206,6 +203,26 @@ pub fn shield(world: &mut World, x: i32, y: i32) {
             slot: EquipmentSlot::Shield,
         })
         .with(DefenseBonus { defense: 1 }  )
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+pub fn ration(world: &mut World, x: i32, y: i32) {
+    world
+        .create_entity()
+        .with(Position {x, y})
+        .with(Renderable {
+            glyph: to_cp437('%'),
+            fg: RGB::named(GREEN),
+            bg: RGB::named(BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Ration".to_string()
+        })
+        .with(Item {})
+        .with(ProvidesFood {})
+        .with(Consumable {})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

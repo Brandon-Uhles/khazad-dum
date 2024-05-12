@@ -3,6 +3,8 @@ use crate::{Map, RunState};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
 
+use super::particle_system::ParticleBuilder;
+
 pub struct MonsterAI {}
 impl<'a> System<'a> for MonsterAI {
     type SystemData = (
@@ -16,6 +18,7 @@ impl<'a> System<'a> for MonsterAI {
         WriteStorage<'a, Position>,
         WriteStorage<'a, WantsToMelee>,
         WriteStorage<'a, Confusion>,
+        WriteExpect<'a, ParticleBuilder>
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -30,6 +33,7 @@ impl<'a> System<'a> for MonsterAI {
             mut position,
             mut wants_to_melee,
             mut confused,
+            mut particle_builder,
         ) = data;
 
         // break out of monster_ai if it is not the monster's turn
@@ -49,6 +53,8 @@ impl<'a> System<'a> for MonsterAI {
                     confused.remove(entity);
                 }
                 can_act = false;
+
+                particle_builder.request(position.x, position.y, RGB::from(MAGENTA), RGB::from(BLACK), to_cp437('?'), 200.0)
             }
 
             if can_act {

@@ -5,6 +5,29 @@ use specs::{prelude::*, saveload::ConvertSaveload, saveload::Marker};
 use specs_derive::*;
 use std::convert::Infallible as NoError;
 
+
+#[derive(Component, ConvertSaveload, Clone, Debug)]
+pub struct ParticleLifetime {
+    pub lifetime_ms : f32,
+}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct ProvidesFood {}
+
+#[derive(Component, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum HungerState {
+    WellFed,
+    Normal,
+    Hungry,
+    Starving,
+}
+
+#[derive(Component, Serialize, Deserialize, Clone, Debug)]
+pub struct HungerClock {
+    pub state: HungerState,
+    pub duration: i32,
+}   
+
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum EquipmentSlot {
     Melee,

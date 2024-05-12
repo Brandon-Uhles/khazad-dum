@@ -1,8 +1,5 @@
 use crate::{
-    components::{CombatStats, InBackpack, Name, Player, Position, Viewshed},
-    gamelog::GameLog,
-    input::menu_input,
-    Map, Point, State,
+    components::{CombatStats, InBackpack, Name, Player, Position, Viewshed}, gamelog::GameLog, input::menu_input, HungerClock, HungerState, Map, Point, State
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -158,9 +155,10 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
 
     let combat_stats = ecs.read_storage::<CombatStats>();
     let players = ecs.read_storage::<Player>();
-    // Grabs health, displays both numerically and with a bar.
+    let hunger = ecs.read_storage::<HungerClock>();
+    // Grabs health and hunger, displays both numerically and with a bar.
     // TODO: Rework healthbar
-    for (_player, stats) in (&players, &combat_stats).join() {
+    for (_player, stats, hc) in (&players, &combat_stats, &hunger).join() {
         let health = format!("HP: {} / {}", stats.hp, stats.max_hp);
         ctx.print_color(12, 43, RGB::named(YELLOW), RGB::named(BLACK), &health);
 
@@ -173,6 +171,13 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
             RGB::named(RED),
             RGB::named(BLACK),
         );
+
+        match hc.state {
+            HungerState::WellFed => ctx.print_color(71, 42, RGB::named(GREEN), RGB::named(BLACK), "Well Fed"),
+            HungerState::Normal => {}
+            HungerState::Hungry => ctx.print_color(71, 42, RGB::named(ORANGE), RGB::named(BLACK), "Hungry" ),
+            HungerState::Starving => ctx.print_color(71, 42, RGB::named(RED), RGB::named(BLACK), "Starving!"),
+        }
     }
 
     // Grabs entries from the game log struct and prints them in reverse order.

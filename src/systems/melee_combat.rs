@@ -1,6 +1,7 @@
 use crate::{
-    components::{CombatStats, Name, SufferDamage, WantsToMelee}, gamelog::GameLog, DefenseBonus, MeleePowerBonus, Equipped
+    components::{CombatStats, HungerClock, Name, SufferDamage, WantsToMelee}, gamelog::GameLog, particle_system::ParticleBuilder, DefenseBonus, Equipped, HungerState, MeleePowerBonus, Position
 };
+use bracket_lib::prelude::*;
 use specs::prelude::*;
 
 pub struct MeleeCombatSystem {}
@@ -15,22 +16,35 @@ impl<'a> System<'a> for MeleeCombatSystem {
         WriteStorage<'a, SufferDamage>,
         ReadStorage<'a, MeleePowerBonus>,
         ReadStorage<'a, DefenseBonus>,
-        ReadStorage<'a, Equipped>
+        ReadStorage<'a, Equipped>,
+        WriteExpect<'a, ParticleBuilder>,
+        ReadStorage<'a, Position>,
+        ReadStorage<'a, HungerClock>
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut log, mut wants_melee, names, combat_stats, mut inflict_damage, power_bonus, defense_bonus, equipped) = data;
+        let (entities, mut log, mut wants_melee, names, combat_stats, mut inflict_damage, power_bonus, defense_bonus, equipped, mut particle_builder, positions, hunger_clocks) = data;
 
         // grabs all entities that can melee, are named, and have stats
         for (entity, wants_melee, name, stats) in
             (&entities, &wants_melee, &names, &combat_stats).join()
         {
+            let pos = positions.get(wants_melee.target);
+            if let Some(pos) = pos {
+                particle_builder.request(pos.x, pos.y, RGB::named(ORANGE), RGB::named(BLACK), to_cp437('‼'), 200.0);
+            }
             // if entity hp is > 0, grab target stats
             if stats.hp > 0 {
                 let mut offensive_bonus = 0;
                 for (_item_entity, power_bonus, equipped_by) in (&entities, &power_bonus, &equipped).join() {
                     if equipped_by.owner == entity {
                         offensive_bonus += power_bonus.power;
+                    }
+                    let hc = hunger_clocks.get(entity);
+                    if let Some(hc) = hc {
+                        if hc.state == HungerState::WellFed {
+                            offensive_bonus += 1;
+                        }
                     }
                 }
                 

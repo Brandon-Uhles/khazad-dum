@@ -1,5 +1,5 @@
-use crate::components::{CombatStats, Player, Position, Viewshed, WantsToMelee};
-use crate::{Map, Monster, RunState};
+use crate::components::{CombatStats, Player, Position, Viewshed, WantsToMelee, HungerClock};
+use crate::{HungerState, Map, Monster, RunState};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
 use std::cmp::{max, min};
@@ -76,6 +76,15 @@ pub fn skip_turn(world: &mut World) -> RunState {
                     can_heal = false;
                 }
             }
+        }
+    }
+    let hunger_clocks = world.read_storage::<HungerClock>();
+    let hc = hunger_clocks.get(*player_entity);
+    if let Some(hc) = hc {
+        match hc.state {
+            HungerState::Hungry => can_heal = false,
+            HungerState::Starving => can_heal = false,
+            _ => {}
         }
     }
 

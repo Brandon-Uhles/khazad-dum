@@ -15,7 +15,6 @@ use bracket_lib::prelude::*;
 use specs::{
     prelude::*,
     saveload::{SimpleMarker, SimpleMarkerAllocator},
-    storage::GenericReadStorage,
 };
 
 use components::*;
@@ -28,14 +27,7 @@ use input::player_input;
 use map::{draw_map, Map};
 use menu::main_menu;
 use systems::{
-    damage::{self, DamageSystem},
-    inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem},
-    map_indexing::MapIndexingSystem,
-    melee_combat::MeleeCombatSystem,
-    monster_ai::MonsterAI,
-    player, saveload,
-    spawner::*,
-    visibility::FoVSystem,
+    damage::{self, DamageSystem}, hunger, inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem}, map_indexing::MapIndexingSystem, melee_combat::MeleeCombatSystem, monster_ai::MonsterAI, particle_system::{self, cull_dead_particles}, player, saveload, spawner::*, visibility::FoVSystem
 };
 
 #[derive(Copy, Clone, PartialEq)]
@@ -73,6 +65,12 @@ impl State {
         items.run_now(&self.ecs);
         let mut drop_items = ItemDropSystem {};
         drop_items.run_now(&self.ecs);
+        self.ecs.maintain();
+        let mut hunger = hunger::HungerSystem{};
+        hunger.run_now(&self.ecs);
+        self.ecs.maintain();
+        let mut particles = particle_system::ParticleSpawnSystem {};
+        particles.run_now(&self.ecs);
         self.ecs.maintain();
     }
 
@@ -176,6 +174,7 @@ impl GameState for State {
         }
 
         ctx.cls();
+        cull_dead_particles(&mut self.ecs, ctx);
         match newrunstate {
             RunState::MainMenu { .. } => {}
             _ => {
@@ -366,6 +365,10 @@ fn main() -> BError {
     gs.ecs.register::<Equipped>();
     gs.ecs.register::<MeleePowerBonus>();
     gs.ecs.register::<DefenseBonus>();
+    gs.ecs.register::<ParticleLifetime>();
+    gs.ecs.register::<HungerState>();
+    gs.ecs.register::<HungerClock>();
+    gs.ecs.register::<ProvidesFood>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
@@ -385,6 +388,7 @@ fn main() -> BError {
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to Stinky Roguelike!".to_string()],
     });
+    gs.ecs.insert(particle_system::ParticleBuilder::new());
 
     // initial loop for game
     main_loop(context, gs)

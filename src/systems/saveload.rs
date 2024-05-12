@@ -88,7 +88,11 @@ pub fn save_game(world: &mut World) {
             Equippable,
             Equipped,
             MeleePowerBonus,
-            DefenseBonus
+            DefenseBonus,
+            ParticleLifetime,
+            HungerClock,
+            HungerState,
+            ProvidesFood
         );
     }
     world.delete_entity(savehelper).expect("Crash on cleanup");
