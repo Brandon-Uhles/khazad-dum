@@ -1,4 +1,6 @@
-use crate::components::{CombatStats, Player, Position, Viewshed, WantsToMelee, HungerClock};
+use crate::components::{
+    CombatStats, EntityMoved, HungerClock, Player, Position, Viewshed, WantsToMelee,
+};
 use crate::{HungerState, Map, Monster, RunState};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -53,6 +55,8 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
             let mut player_pos = ecs.write_resource::<Point>();
             player_pos.x = pos.x;
             player_pos.y = pos.y;
+
+            let mut entity_moved = ecs.write_storage::<EntityMoved>();
         }
     }
 }

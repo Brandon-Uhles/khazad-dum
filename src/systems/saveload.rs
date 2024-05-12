@@ -93,7 +93,11 @@ pub fn save_game(world: &mut World) {
             HungerClock,
             HungerState,
             ProvidesFood,
-            MagicMapper
+            MagicMapper,
+            Hidden,
+            EntryTrigger,
+            EntityMoved,
+            SingleActivation
         );
     }
     world.delete_entity(savehelper).expect("Crash on cleanup");

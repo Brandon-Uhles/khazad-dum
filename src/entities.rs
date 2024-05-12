@@ -5,7 +5,10 @@ use specs::{
 };
 
 use crate::{
-        AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable, HungerClock, HungerState::*, InflictsDamage, Item, MagicMapper, MeleePowerBonus, Monster, Name, Player, Position, ProvidesFood, ProvidesHealing, Ranged, Renderable, SerializeMe, Viewshed
+    AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, DefenseBonus, EntryTrigger,
+    EquipmentSlot, Equippable, Hidden, HungerClock, HungerState::*, InflictsDamage, Item,
+    MagicMapper, MeleePowerBonus, Monster, Name, Player, Position, ProvidesFood, ProvidesHealing,
+    Ranged, Renderable, SerializeMe, Viewshed,
 };
 
 pub const MAX_MOBS: i32 = 4;
@@ -36,7 +39,10 @@ pub fn create_player(world: &mut World, x: i32, y: i32) -> Entity {
             defense: 2,
             power: 5,
         })
-        .with(HungerClock { state: WellFed, duration: 20 })
+        .with(HungerClock {
+            state: WellFed,
+            duration: 20,
+        })
         .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
@@ -162,21 +168,21 @@ pub fn confusion_scroll(world: &mut World, x: i32, y: i32) {
         .build();
 }
 pub fn magic_mapping_scroll(world: &mut World, x: i32, y: i32) {
-    world 
+    world
         .create_entity()
-        .with(Position {x, y})
+        .with(Position { x, y })
         .with(Renderable {
             glyph: to_cp437(')'),
             fg: RGB::named(CYAN3),
             bg: RGB::named(MAGENTA),
-            render_order: 2 
+            render_order: 2,
         })
         .with(Name {
             name: "Scroll of Magic Mapping".to_string(),
         })
         .with(Item {})
-        .with(Consumable{})
-        .with(MagicMapper{})
+        .with(Consumable {})
+        .with(MagicMapper {})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
@@ -221,7 +227,7 @@ pub fn shield(world: &mut World, x: i32, y: i32) {
         .with(Equippable {
             slot: EquipmentSlot::Shield,
         })
-        .with(DefenseBonus { defense: 1 }  )
+        .with(DefenseBonus { defense: 1 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
@@ -229,7 +235,7 @@ pub fn shield(world: &mut World, x: i32, y: i32) {
 pub fn ration(world: &mut World, x: i32, y: i32) {
     world
         .create_entity()
-        .with(Position {x, y})
+        .with(Position { x, y })
         .with(Renderable {
             glyph: to_cp437('%'),
             fg: RGB::named(GREEN),
@@ -237,11 +243,31 @@ pub fn ration(world: &mut World, x: i32, y: i32) {
             render_order: 2,
         })
         .with(Name {
-            name: "Ration".to_string()
+            name: "Ration".to_string(),
         })
         .with(Item {})
         .with(ProvidesFood {})
         .with(Consumable {})
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+pub fn bear_trap(world: &mut World, x: i32, y: i32) {
+    world
+        .create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: to_cp437('^'),
+            fg: RGB::named(RED),
+            bg: RGB::named(BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Bear Trap".to_string(),
+        })
+        .with(Hidden {})
+        .with(EntryTrigger {})
+        .with(InflictsDamage { damage: 6 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

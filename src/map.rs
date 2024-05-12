@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use specs::prelude::*;
 use std::{
     cmp::{max, min},
-    collections::HashSet
-    };
+    collections::HashSet,
+};
 use {Algorithm2D, BTerm, BaseMap, Point, RandomNumberGenerator, RGB};
 
 pub const MAP_WIDTH: usize = 80;
@@ -22,7 +22,7 @@ pub struct Map {
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
     pub depth: i32,
-    pub bloodstains : HashSet<usize>,
+    pub bloodstains: HashSet<usize>,
 
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
@@ -132,7 +132,6 @@ impl Map {
             depth: new_depth,
             bloodstains: HashSet::new(),
         };
-
 
         let mut rng = RandomNumberGenerator::new();
 
@@ -259,7 +258,9 @@ pub fn draw_map(ecs: &World, ctx: &mut BTerm) {
                     glyph = to_cp437('>');
                 }
             }
-            if map.bloodstains.contains(&idx) {bg = RGB::from_f32(0.75, 0., 0.)}
+            if map.bloodstains.contains(&idx) {
+                bg = RGB::from_f32(0.75, 0., 0.)
+            }
             if !map.visible_tiles[idx] {
                 fg = fg.to_greyscale();
                 bg = RGB::from_f32(0., 0., 0.);
@@ -289,33 +290,43 @@ pub fn try_next_level(world: &mut World) -> bool {
         false
     }
 }
-fn wall_glyph(map : &Map, x: i32, y: i32) -> FontCharType {
-    if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 {return 35; }
-    let mut mask : u8 = 0;
+fn wall_glyph(map: &Map, x: i32, y: i32) -> FontCharType {
+    if x < 1 || x > map.width - 2 || y < 1 || y > map.height - 2 as i32 {
+        return 35;
+    }
+    let mut mask: u8 = 0;
 
-    if is_revealed_and_wall(map, x, y - 1) {mask +=1;}
-    if is_revealed_and_wall(map, x, y + 1) {mask +=2;}
-    if is_revealed_and_wall(map, x - 1, y) {mask +=4;}
-    if is_revealed_and_wall(map, x + 1, y) {mask +=8;}
+    if is_revealed_and_wall(map, x, y - 1) {
+        mask += 1;
+    }
+    if is_revealed_and_wall(map, x, y + 1) {
+        mask += 2;
+    }
+    if is_revealed_and_wall(map, x - 1, y) {
+        mask += 4;
+    }
+    if is_revealed_and_wall(map, x + 1, y) {
+        mask += 8;
+    }
 
     match mask {
-        0 => { 9 }
-        1 => { 186 }
-        2 => { 186 }
-        3 => { 186 }
-        4 => { 205 }
-        5 => { 188 }
-        6 => { 187 }
-        7 => { 185 }
-        8 => { 205 }
-        9 => { 200 }
-        10 => { 201 }
-        11 => { 204 }
-        12 => { 205 }
-        13 => { 202 }
-        14 => { 203 }
-        15 => { 206 }
-        _ => { 35 }
+        0 => 9,
+        1 => 186,
+        2 => 186,
+        3 => 186,
+        4 => 205,
+        5 => 188,
+        6 => 187,
+        7 => 185,
+        8 => 205,
+        9 => 200,
+        10 => 201,
+        11 => 204,
+        12 => 205,
+        13 => 202,
+        14 => 203,
+        15 => 206,
+        _ => 35,
     }
 }
 

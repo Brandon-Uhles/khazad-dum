@@ -1,5 +1,8 @@
 use crate::{
-    components::{CombatStats, HungerClock, Name, SufferDamage, WantsToMelee}, gamelog::GameLog, particle_system::ParticleBuilder, DefenseBonus, Equipped, HungerState, MeleePowerBonus, Position
+    components::{CombatStats, HungerClock, Name, SufferDamage, WantsToMelee},
+    gamelog::GameLog,
+    particle_system::ParticleBuilder,
+    DefenseBonus, Equipped, HungerState, MeleePowerBonus, Position,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -19,11 +22,24 @@ impl<'a> System<'a> for MeleeCombatSystem {
         ReadStorage<'a, Equipped>,
         WriteExpect<'a, ParticleBuilder>,
         ReadStorage<'a, Position>,
-        ReadStorage<'a, HungerClock>
+        ReadStorage<'a, HungerClock>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (entities, mut log, mut wants_melee, names, combat_stats, mut inflict_damage, power_bonus, defense_bonus, equipped, mut particle_builder, positions, hunger_clocks) = data;
+        let (
+            entities,
+            mut log,
+            mut wants_melee,
+            names,
+            combat_stats,
+            mut inflict_damage,
+            power_bonus,
+            defense_bonus,
+            equipped,
+            mut particle_builder,
+            positions,
+            hunger_clocks,
+        ) = data;
 
         // grabs all entities that can melee, are named, and have stats
         for (entity, wants_melee, name, stats) in
@@ -31,12 +47,21 @@ impl<'a> System<'a> for MeleeCombatSystem {
         {
             let pos = positions.get(wants_melee.target);
             if let Some(pos) = pos {
-                particle_builder.request(pos.x, pos.y, RGB::named(ORANGE), RGB::named(BLACK), to_cp437('‼'), 200.0);
+                particle_builder.request(
+                    pos.x,
+                    pos.y,
+                    RGB::named(ORANGE),
+                    RGB::named(BLACK),
+                    to_cp437('‼'),
+                    200.0,
+                );
             }
             // if entity hp is > 0, grab target stats
             if stats.hp > 0 {
                 let mut offensive_bonus = 0;
-                for (_item_entity, power_bonus, equipped_by) in (&entities, &power_bonus, &equipped).join() {
+                for (_item_entity, power_bonus, equipped_by) in
+                    (&entities, &power_bonus, &equipped).join()
+                {
                     if equipped_by.owner == entity {
                         offensive_bonus += power_bonus.power;
                     }
@@ -47,19 +72,24 @@ impl<'a> System<'a> for MeleeCombatSystem {
                         }
                     }
                 }
-                
+
                 let target_stats = combat_stats.get(wants_melee.target).unwrap();
                 // if target stats > 0, attempt to apply damage
                 if target_stats.hp > 0 {
                     let target_name = names.get(wants_melee.target).unwrap();
 
                     let mut defensive_bonus = 0;
-                    for(_item_entity, defense_bonus, equipped_by) in (&entities, &defense_bonus, &equipped).join() {
+                    for (_item_entity, defense_bonus, equipped_by) in
+                        (&entities, &defense_bonus, &equipped).join()
+                    {
                         if equipped_by.owner == wants_melee.target {
                             defensive_bonus += defense_bonus.defense;
                         }
                     }
-                    let damage = i32::max(0, stats.power + offensive_bonus - target_stats.defense - defensive_bonus);
+                    let damage = i32::max(
+                        0,
+                        stats.power + offensive_bonus - target_stats.defense - defensive_bonus,
+                    );
 
                     if damage == 0 {
                         log.entries.push(format!(

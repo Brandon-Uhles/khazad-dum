@@ -16,6 +16,7 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("Shield", 3)
         .add("Rations", 10)
         .add("Magic Mapping Scroll", 2)
+        .add("Bear Trap", 200)
 }
 
 pub fn spawn_room(world: &mut World, room: &Rectangle, map_depth: i32) {
@@ -24,12 +25,12 @@ pub fn spawn_room(world: &mut World, room: &Rectangle, map_depth: i32) {
 
     {
         let mut rng = world.write_resource::<RandomNumberGenerator>();
-        let num_spawns = rng.roll_dice(1, MAX_MOBS + 3) + (map_depth - 1) - 3;
+        let num_spawns = rng.roll_dice(1, MAX_MOBS + 15) + (map_depth - 1) - 3;
 
         for _i in 0..num_spawns {
             let mut added = false;
             let mut tries = 0;
-            while !added && tries < 20 {
+            while !added && tries < 50 {
                 let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
                 let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
                 let idx = (y * MAP_WIDTH) + x;
@@ -59,6 +60,7 @@ pub fn spawn_room(world: &mut World, room: &Rectangle, map_depth: i32) {
             "Shield" => shield(world, x, y),
             "Rations" => ration(world, x, y),
             "Magic Mapping Scroll" => magic_mapping_scroll(world, x, y),
+            "Bear Trap" => bear_trap(world, x, y),
             _ => {}
         }
     }

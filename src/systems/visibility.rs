@@ -1,5 +1,5 @@
-use crate::components::{Player, Position, Viewshed};
-use crate::Map;
+use crate::components::{Hidden, Name, Player, Position, Viewshed};
+use crate::{gamelog::GameLog, Map};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
 
@@ -12,10 +12,24 @@ impl<'a> System<'a> for FoVSystem {
         WriteStorage<'a, Viewshed>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, Player>,
+        WriteStorage<'a, Hidden>,
+        WriteExpect<'a, RandomNumberGenerator>,
+        WriteExpect<'a, GameLog>,
+        ReadStorage<'a, Name>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut map, entities, mut viewshed, position, _player) = data;
+        let (
+            mut map,
+            entities,
+            mut viewshed,
+            position,
+            _player,
+            mut hidden,
+            mut rng,
+            mut log,
+            names,
+        ) = data;
 
         for (_entity, viewshed, position) in (&entities, &mut viewshed, &position).join() {
             if viewshed.dirty {
@@ -36,6 +50,19 @@ impl<'a> System<'a> for FoVSystem {
                         let idx = map.xy_idx(vis.x, vis.y);
                         map.revealed_tiles[idx] = true;
                         map.visible_tiles[idx] = true;
+
+                        for e in map.tile_content[idx].iter() {
+                            let maybe_hidden = hidden.get(*e);
+                            if let Some(_maybe_hidden) = maybe_hidden {
+                                if rng.roll_dice(1, 24) == 1 {
+                                    let name = names.get(*e);
+                                    if let Some(name) = name {
+                                        log.entries.push(format!("You spotted a {}.", &name.name));
+                                    }
+                                    hidden.remove(*e);
+                                }
+                            }
+                        }
                     }
                 }
             }

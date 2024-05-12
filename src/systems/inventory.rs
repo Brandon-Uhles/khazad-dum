@@ -66,7 +66,7 @@ impl<'a> System<'a> for ItemUseSystem {
         ReadStorage<'a, ProvidesFood>,
         WriteStorage<'a, HungerClock>,
         ReadStorage<'a, MagicMapper>,
-        WriteExpect<'a, RunState>
+        WriteExpect<'a, RunState>,
     );
     fn run(&mut self, data: Self::SystemData) {
         let (
@@ -91,7 +91,7 @@ impl<'a> System<'a> for ItemUseSystem {
             edible,
             mut hunger_clocks,
             magic_mapper,
-            mut runstate
+            mut runstate,
         ) = data;
 
         for (entity, useitem) in (&entities, &wants_use).join() {
@@ -121,7 +121,14 @@ impl<'a> System<'a> for ItemUseSystem {
                                 for mob in map.tile_content[idx].iter() {
                                     targets.push(*mob);
                                 }
-                                particle_builder.request(tile_idx.x, tile_idx.y, RGB::named(ORANGE), RGB::named(BLACK), to_cp437('░'), 200.0)
+                                particle_builder.request(
+                                    tile_idx.x,
+                                    tile_idx.y,
+                                    RGB::named(ORANGE),
+                                    RGB::named(BLACK),
+                                    to_cp437('░'),
+                                    200.0,
+                                )
                             }
                         }
                     }
@@ -138,7 +145,10 @@ impl<'a> System<'a> for ItemUseSystem {
                     if let Some(hc) = hc {
                         hc.state = HungerState::WellFed;
                         hc.duration = 20;
-                        gamelog.entries.push(format!("You eat the {}", names.get(useitem.item).unwrap().name));
+                        gamelog.entries.push(format!(
+                            "You eat the {}",
+                            names.get(useitem.item).unwrap().name
+                        ));
                     }
                 }
             }
@@ -148,8 +158,10 @@ impl<'a> System<'a> for ItemUseSystem {
                 None => {}
                 Some(_) => {
                     used_item = true;
-                    *runstate = RunState::MagicMapReveal{row : 0};
-                    gamelog.entries.push("The map is revealed to you!".to_string());
+                    *runstate = RunState::MagicMapReveal { row: 0 };
+                    gamelog
+                        .entries
+                        .push("The map is revealed to you!".to_string());
                 }
             }
 
@@ -161,24 +173,42 @@ impl<'a> System<'a> for ItemUseSystem {
                     let target = targets[0];
 
                     let mut to_unequip: Vec<Entity> = Vec::new();
-                    for (item_entity, already_equipped, name) in (&entities, &equipped, &names).join() {
-                        if already_equipped.owner == target && already_equipped.slot == target_slot {
+                    for (item_entity, already_equipped, name) in
+                        (&entities, &equipped, &names).join()
+                    {
+                        if already_equipped.owner == target && already_equipped.slot == target_slot
+                        {
                             to_unequip.push(item_entity);
                             if target == *player_entity {
-                                gamelog.entries.push(format!("You unequip the {}.", name.name));
+                                gamelog
+                                    .entries
+                                    .push(format!("You unequip the {}.", name.name));
                             }
                         }
                     }
 
                     for item in to_unequip.iter() {
                         equipped.remove(*item);
-                        backpack.insert(*item, InBackpack { owner : target}).expect("Unable to insert into backpack");
+                        backpack
+                            .insert(*item, InBackpack { owner: target })
+                            .expect("Unable to insert into backpack");
                     }
 
-                    equipped.insert(useitem.item, Equipped { owner : target, slot : target_slot}).expect("Unable to equip item.");
+                    equipped
+                        .insert(
+                            useitem.item,
+                            Equipped {
+                                owner: target,
+                                slot: target_slot,
+                            },
+                        )
+                        .expect("Unable to equip item.");
                     backpack.remove(useitem.item);
                     if target == *player_entity {
-                        gamelog.entries.push(format!("You equip the {}.", names.get(useitem.item).unwrap().name))
+                        gamelog.entries.push(format!(
+                            "You equip the {}.",
+                            names.get(useitem.item).unwrap().name
+                        ))
                     }
                 }
             }
@@ -243,7 +273,7 @@ impl<'a> System<'a> for ItemUseSystem {
                                         to_cp437('?'),
                                         200.0,
                                     );
-                                } 
+                                }
                             }
                             used_item = true;
                         }
@@ -271,7 +301,7 @@ impl<'a> System<'a> for ItemUseSystem {
                                 "You use the {} on {}, inflicting {} damage.",
                                 item_name.name, mob_name.name, damage.damage
                             ));
-                            
+
                             let pos = positions.get(*mob);
                             if let Some(pos) = pos {
                                 particle_builder.request(
@@ -295,7 +325,6 @@ impl<'a> System<'a> for ItemUseSystem {
                     None => {}
                     Some(_) => {
                         entities.delete(useitem.item).expect("Delete failed");
-
                     }
                 }
             }

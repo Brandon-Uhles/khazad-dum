@@ -5,6 +5,7 @@ pub mod gui;
 pub mod input;
 pub mod map;
 pub mod menu;
+pub mod rex_assets;
 pub mod systems;
 
 extern crate bracket_lib;
@@ -27,7 +28,17 @@ use input::player_input;
 use map::{draw_map, Map, MAP_HEIGHT, MAP_WIDTH};
 use menu::main_menu;
 use systems::{
-    damage::{self, DamageSystem}, hunger, inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem}, map_indexing::MapIndexingSystem, melee_combat::MeleeCombatSystem, monster_ai::MonsterAI, particle_system::{self, cull_dead_particles}, player, saveload, spawner::*, visibility::FoVSystem
+    damage::{self, DamageSystem},
+    hunger,
+    inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem},
+    map_indexing::MapIndexingSystem,
+    melee_combat::MeleeCombatSystem,
+    monster_ai::MonsterAI,
+    particle_system::{self, cull_dead_particles},
+    player, saveload,
+    spawner::*,
+    trigger::TriggerSystem,
+    visibility::FoVSystem,
 };
 
 #[derive(Copy, Clone, PartialEq)]
@@ -42,7 +53,7 @@ pub enum RunState {
     MainMenu { menu_selection: MainMenuSelection },
     SaveGame,
     NextLevel,
-    MagicMapReveal {row : i32}
+    MagicMapReveal { row: i32 },
 }
 pub struct State {
     pub ecs: World,
@@ -56,6 +67,8 @@ impl State {
         mob.run_now(&self.ecs);
         let mut mapindex = MapIndexingSystem {};
         mapindex.run_now(&self.ecs);
+        let mut triggers = TriggerSystem {};
+        triggers.run_now(&self.ecs);
         let mut melee = MeleeCombatSystem {};
         melee.run_now(&self.ecs);
         let mut damage = DamageSystem {};
@@ -66,10 +79,8 @@ impl State {
         items.run_now(&self.ecs);
         let mut drop_items = ItemDropSystem {};
         drop_items.run_now(&self.ecs);
-        self.ecs.maintain();
-        let mut hunger = hunger::HungerSystem{};
+        let mut hunger = hunger::HungerSystem {};
         hunger.run_now(&self.ecs);
-        self.ecs.maintain();
         let mut particles = particle_system::ParticleSpawnSystem {};
         particles.run_now(&self.ecs);
         self.ecs.maintain();
@@ -184,12 +195,15 @@ impl GameState for State {
                 {
                     let positions = self.ecs.read_storage::<Position>();
                     let renderables = self.ecs.read_storage::<Renderable>();
+                    let hidden = self.ecs.read_storage::<Hidden>();
                     let map = self.ecs.fetch::<Map>();
 
-                    let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+                    let mut data = (&positions, &renderables, !&hidden)
+                        .join()
+                        .collect::<Vec<_>>();
                     data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
 
-                    for (pos, render) in data.iter() {
+                    for (pos, render, _hidden) in data.iter() {
                         let idx = map.xy_idx(pos.x, pos.y);
                         if map.visible_tiles[idx] {
                             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
@@ -211,8 +225,10 @@ impl GameState for State {
                 self.run_systems();
                 self.ecs.maintain();
                 match *self.ecs.fetch::<RunState>() {
-                    RunState::MagicMapReveal { .. } => newrunstate = RunState::MagicMapReveal{row : 0},
-                    _ => newrunstate = RunState::MonsterTurn
+                    RunState::MagicMapReveal { .. } => {
+                        newrunstate = RunState::MagicMapReveal { row: 0 }
+                    }
+                    _ => newrunstate = RunState::MonsterTurn,
                 }
             }
             RunState::PreRun => {
@@ -387,6 +403,10 @@ fn main() -> BError {
     gs.ecs.register::<HungerClock>();
     gs.ecs.register::<ProvidesFood>();
     gs.ecs.register::<MagicMapper>();
+    gs.ecs.register::<Hidden>();
+    gs.ecs.register::<EntryTrigger>();
+    gs.ecs.register::<EntityMoved>();
+    gs.ecs.register::<SingleActivation>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
@@ -407,6 +427,7 @@ fn main() -> BError {
         entries: vec!["Welcome to Stinky Roguelike!".to_string()],
     });
     gs.ecs.insert(particle_system::ParticleBuilder::new());
+    gs.ecs.insert(rex_assets::RexAssets::new());
 
     // initial loop for game
     main_loop(context, gs)

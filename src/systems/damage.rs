@@ -1,5 +1,8 @@
 use crate::{
-    components::{CombatStats, Name, Player, SufferDamage}, entities, gamelog::GameLog, Map, Position
+    components::{CombatStats, Name, Player, SufferDamage},
+    entities,
+    gamelog::GameLog,
+    Map, Position,
 };
 use specs::prelude::*;
 
@@ -11,7 +14,7 @@ impl<'a> System<'a> for DamageSystem {
         WriteStorage<'a, SufferDamage>,
         ReadStorage<'a, Position>,
         WriteExpect<'a, Map>,
-        Entities<'a>
+        Entities<'a>,
     );
 
     fn run(&mut self, data: Self::SystemData) {

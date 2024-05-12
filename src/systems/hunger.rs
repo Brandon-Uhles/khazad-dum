@@ -1,7 +1,5 @@
+use crate::{gamelog::GameLog, HungerClock, HungerState, RunState, SufferDamage};
 use specs::prelude::*;
-use crate::{
-    HungerClock, HungerState, RunState, SufferDamage, gamelog::GameLog
-};
 
 pub struct HungerSystem {}
 
@@ -15,10 +13,11 @@ impl<'a> System<'a> for HungerSystem {
         WriteExpect<'a, GameLog>,
     );
 
-    fn run(&mut self, data : Self::SystemData) {
-        let (player_entity, runstate, entities, mut hunger_clock, mut suffer_damage, mut log) = data;
+    fn run(&mut self, data: Self::SystemData) {
+        let (player_entity, runstate, entities, mut hunger_clock, mut suffer_damage, mut log) =
+            data;
 
-        for(entity, mut clock) in (&entities, &mut hunger_clock).join() {
+        for (entity, mut clock) in (&entities, &mut hunger_clock).join() {
             let mut proceed = false;
 
             match *runstate {
@@ -32,7 +31,7 @@ impl<'a> System<'a> for HungerSystem {
                         proceed = true;
                     }
                 }
-                _ => proceed = false
+                _ => proceed = false,
             }
 
             if proceed {
@@ -56,7 +55,7 @@ impl<'a> System<'a> for HungerSystem {
                         HungerState::Hungry => {
                             clock.state = HungerState::Starving;
                             clock.duration = 50;
-                            
+
                             if entity == *player_entity {
                                 log.entries.push("You are starving!".to_string());
                             }

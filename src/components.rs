@@ -5,11 +5,22 @@ use specs::{prelude::*, saveload::ConvertSaveload, saveload::Marker};
 use specs_derive::*;
 use std::convert::Infallible as NoError;
 
-
 #[derive(Component, ConvertSaveload, Clone, Debug)]
 pub struct ParticleLifetime {
-    pub lifetime_ms : f32,
+    pub lifetime_ms: f32,
 }
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct SingleActivation {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct EntityMoved {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct EntryTrigger {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Hidden {}
 
 #[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct MagicMapper {}
@@ -29,7 +40,7 @@ pub enum HungerState {
 pub struct HungerClock {
     pub state: HungerState,
     pub duration: i32,
-}   
+}
 
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum EquipmentSlot {
@@ -149,12 +160,12 @@ pub struct WantsToPickupItem {
     pub item: Entity,
 }
 
-#[derive(Component, Debug, Serialize, Deserialize, Clone )]
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct MeleePowerBonus {
-    pub power : i32
+    pub power: i32,
 }
 
-#[derive(Component, Debug, Serialize, Deserialize, Clone )]
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
 pub struct DefenseBonus {
     pub defense: i32,
 }

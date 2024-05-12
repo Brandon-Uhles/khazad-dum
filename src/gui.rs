@@ -1,5 +1,8 @@
 use crate::{
-    components::{CombatStats, InBackpack, Name, Player, Position, Viewshed}, gamelog::GameLog, input::menu_input, HungerClock, HungerState, Map, Point, State
+    components::{CombatStats, InBackpack, Name, Player, Position, Viewshed},
+    gamelog::GameLog,
+    input::menu_input,
+    Hidden, HungerClock, HungerState, Map, Point, State,
 };
 use bracket_lib::prelude::*;
 use specs::prelude::*;
@@ -173,10 +176,16 @@ pub fn draw_ui(ecs: &World, ctx: &mut BTerm) {
         );
 
         match hc.state {
-            HungerState::WellFed => ctx.print_color(71, 42, RGB::named(GREEN), RGB::named(BLACK), "Well Fed"),
+            HungerState::WellFed => {
+                ctx.print_color(71, 42, RGB::named(GREEN), RGB::named(BLACK), "Well Fed")
+            }
             HungerState::Normal => {}
-            HungerState::Hungry => ctx.print_color(71, 42, RGB::named(ORANGE), RGB::named(BLACK), "Hungry" ),
-            HungerState::Starving => ctx.print_color(71, 42, RGB::named(RED), RGB::named(BLACK), "Starving!"),
+            HungerState::Hungry => {
+                ctx.print_color(71, 42, RGB::named(ORANGE), RGB::named(BLACK), "Hungry")
+            }
+            HungerState::Starving => {
+                ctx.print_color(71, 42, RGB::named(RED), RGB::named(BLACK), "Starving!")
+            }
         }
     }
 
@@ -204,6 +213,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut BTerm) {
     let map = ecs.fetch::<Map>();
     let names = ecs.read_storage::<Name>();
     let positions = ecs.read_storage::<Position>();
+    let hidden = ecs.read_storage::<Hidden>();
 
     // Checks if mouse is on-screen
     let mouse_pos = ctx.mouse_pos();
@@ -212,7 +222,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut BTerm) {
     }
     // Initializes tooltip vector. If mouse is over a named anything at that position, push to tooltip vector
     let mut tooltip: Vec<String> = Vec::new();
-    for (name, position) in (&names, &positions).join() {
+    for (name, position, _hidden) in (&names, &positions, !&hidden).join() {
         let idx = map.xy_idx(position.x, position.y);
         if position.x == mouse_pos.0 && position.y == mouse_pos.1 && map.visible_tiles[idx] {
             tooltip.push(name.name.to_string());

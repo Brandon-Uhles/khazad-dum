@@ -18,7 +18,8 @@ impl<'a> System<'a> for MonsterAI {
         WriteStorage<'a, Position>,
         WriteStorage<'a, WantsToMelee>,
         WriteStorage<'a, Confusion>,
-        WriteExpect<'a, ParticleBuilder>
+        WriteExpect<'a, ParticleBuilder>,
+        WriteStorage<'a, EntityMoved>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -34,6 +35,7 @@ impl<'a> System<'a> for MonsterAI {
             mut wants_to_melee,
             mut confused,
             mut particle_builder,
+            mut entity_moved,
         ) = data;
 
         // break out of monster_ai if it is not the monster's turn
@@ -54,7 +56,14 @@ impl<'a> System<'a> for MonsterAI {
                 }
                 can_act = false;
 
-                particle_builder.request(position.x, position.y, RGB::from(MAGENTA), RGB::from(BLACK), to_cp437('?'), 200.0)
+                particle_builder.request(
+                    position.x,
+                    position.y,
+                    RGB::from(MAGENTA),
+                    RGB::from(BLACK),
+                    to_cp437('?'),
+                    200.0,
+                )
             }
 
             if can_act {
@@ -90,6 +99,9 @@ impl<'a> System<'a> for MonsterAI {
                         map.blocked[idx] = false;
                         position.x = path.steps[1] as i32 % map.width;
                         position.y = path.steps[1] as i32 / map.width;
+                        entity_moved
+                            .insert(entity, EntityMoved {})
+                            .expect("Unable to insert marker");
                         idx = map.xy_idx(position.x, position.y);
                         map.blocked[idx] = true;
                         viewshed.dirty = true;
