@@ -1,4 +1,4 @@
-use crate::{components::*, gamelog::GameLog, Map, Point};
+use crate::{components::*, gamelog::GameLog, Map, Point, RunState};
 use bracket_lib::prelude::*;
 use specs::prelude::*;
 
@@ -54,7 +54,7 @@ impl<'a> System<'a> for ItemUseSystem {
         WriteStorage<'a, CombatStats>,
         ReadStorage<'a, Consumable>,
         ReadStorage<'a, InflictsDamage>,
-        ReadExpect<'a, Map>,
+        WriteExpect<'a, Map>,
         WriteStorage<'a, SufferDamage>,
         ReadStorage<'a, AreaOfEffect>,
         WriteStorage<'a, Confusion>,
@@ -64,7 +64,9 @@ impl<'a> System<'a> for ItemUseSystem {
         WriteExpect<'a, ParticleBuilder>,
         ReadStorage<'a, Position>,
         ReadStorage<'a, ProvidesFood>,
-        WriteStorage<'a, HungerClock>
+        WriteStorage<'a, HungerClock>,
+        ReadStorage<'a, MagicMapper>,
+        WriteExpect<'a, RunState>
     );
     fn run(&mut self, data: Self::SystemData) {
         let (
@@ -77,7 +79,7 @@ impl<'a> System<'a> for ItemUseSystem {
             mut combat_stats,
             consumables,
             inflict_damage,
-            map,
+            mut map,
             mut suffer_damage,
             aoe,
             mut confuse,
@@ -87,7 +89,9 @@ impl<'a> System<'a> for ItemUseSystem {
             mut particle_builder,
             positions,
             edible,
-            mut hunger_clocks
+            mut hunger_clocks,
+            magic_mapper,
+            mut runstate
         ) = data;
 
         for (entity, useitem) in (&entities, &wants_use).join() {
@@ -136,6 +140,16 @@ impl<'a> System<'a> for ItemUseSystem {
                         hc.duration = 20;
                         gamelog.entries.push(format!("You eat the {}", names.get(useitem.item).unwrap().name));
                     }
+                }
+            }
+
+            let is_mapper = magic_mapper.get(useitem.item);
+            match is_mapper {
+                None => {}
+                Some(_) => {
+                    used_item = true;
+                    *runstate = RunState::MagicMapReveal{row : 0};
+                    gamelog.entries.push("The map is revealed to you!".to_string());
                 }
             }
 
@@ -281,6 +295,7 @@ impl<'a> System<'a> for ItemUseSystem {
                     None => {}
                     Some(_) => {
                         entities.delete(useitem.item).expect("Delete failed");
+
                     }
                 }
             }

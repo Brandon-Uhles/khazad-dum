@@ -15,6 +15,7 @@ fn room_table(map_depth: i32) -> RandomTable {
         .add("Dagger", 3)
         .add("Shield", 3)
         .add("Rations", 10)
+        .add("Magic Mapping Scroll", 2)
 }
 
 pub fn spawn_room(world: &mut World, room: &Rectangle, map_depth: i32) {
@@ -57,6 +58,7 @@ pub fn spawn_room(world: &mut World, room: &Rectangle, map_depth: i32) {
             "Dagger" => dagger(world, x, y),
             "Shield" => shield(world, x, y),
             "Rations" => ration(world, x, y),
+            "Magic Mapping Scroll" => magic_mapping_scroll(world, x, y),
             _ => {}
         }
     }

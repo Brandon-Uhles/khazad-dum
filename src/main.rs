@@ -24,7 +24,7 @@ use gui::{
     draw_ui, drop_item_menu, ranged_target, ItemMenuResult, MainMenuResult, MainMenuSelection,
 };
 use input::player_input;
-use map::{draw_map, Map};
+use map::{draw_map, Map, MAP_HEIGHT, MAP_WIDTH};
 use menu::main_menu;
 use systems::{
     damage::{self, DamageSystem}, hunger, inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem}, map_indexing::MapIndexingSystem, melee_combat::MeleeCombatSystem, monster_ai::MonsterAI, particle_system::{self, cull_dead_particles}, player, saveload, spawner::*, visibility::FoVSystem
@@ -42,6 +42,7 @@ pub enum RunState {
     MainMenu { menu_selection: MainMenuSelection },
     SaveGame,
     NextLevel,
+    MagicMapReveal {row : i32}
 }
 pub struct State {
     pub ecs: World,
@@ -209,7 +210,10 @@ impl GameState for State {
             RunState::PlayerTurn => {
                 self.run_systems();
                 self.ecs.maintain();
-                newrunstate = RunState::MonsterTurn;
+                match *self.ecs.fetch::<RunState>() {
+                    RunState::MagicMapReveal { .. } => newrunstate = RunState::MagicMapReveal{row : 0},
+                    _ => newrunstate = RunState::MonsterTurn
+                }
             }
             RunState::PreRun => {
                 self.run_systems();
@@ -317,6 +321,19 @@ impl GameState for State {
                 self.goto_next_level();
                 newrunstate = RunState::PreRun;
             }
+
+            RunState::MagicMapReveal { row } => {
+                let mut map = self.ecs.fetch_mut::<Map>();
+                for x in 0..MAP_WIDTH {
+                    let idx = map.xy_idx(x as i32, row);
+                    map.revealed_tiles[idx] = true;
+                }
+                if row as usize == MAP_HEIGHT - 1 {
+                    newrunstate = RunState::MonsterTurn;
+                } else {
+                    newrunstate = RunState::MagicMapReveal { row: row + 1 }
+                }
+            }
         }
 
         {
@@ -369,6 +386,7 @@ fn main() -> BError {
     gs.ecs.register::<HungerState>();
     gs.ecs.register::<HungerClock>();
     gs.ecs.register::<ProvidesFood>();
+    gs.ecs.register::<MagicMapper>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 

@@ -5,7 +5,7 @@ use specs::{
 };
 
 use crate::{
-        AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable, HungerClock, HungerState::*, InflictsDamage, Item, MeleePowerBonus, Monster, Name, Player, Position, ProvidesFood, ProvidesHealing, Ranged, Renderable, SerializeMe, Viewshed
+        AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, DefenseBonus, EquipmentSlot, Equippable, HungerClock, HungerState::*, InflictsDamage, Item, MagicMapper, MeleePowerBonus, Monster, Name, Player, Position, ProvidesFood, ProvidesHealing, Ranged, Renderable, SerializeMe, Viewshed
 };
 
 pub const MAX_MOBS: i32 = 4;
@@ -158,6 +158,25 @@ pub fn confusion_scroll(world: &mut World, x: i32, y: i32) {
         .with(Consumable {})
         .with(Ranged { range: 6 })
         .with(Confusion { turns: 4 })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+pub fn magic_mapping_scroll(world: &mut World, x: i32, y: i32) {
+    world 
+        .create_entity()
+        .with(Position {x, y})
+        .with(Renderable {
+            glyph: to_cp437(')'),
+            fg: RGB::named(CYAN3),
+            bg: RGB::named(MAGENTA),
+            render_order: 2 
+        })
+        .with(Name {
+            name: "Scroll of Magic Mapping".to_string(),
+        })
+        .with(Item {})
+        .with(Consumable{})
+        .with(MagicMapper{})
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

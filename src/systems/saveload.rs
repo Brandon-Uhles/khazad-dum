@@ -92,7 +92,8 @@ pub fn save_game(world: &mut World) {
             ParticleLifetime,
             HungerClock,
             HungerState,
-            ProvidesFood
+            ProvidesFood,
+            MagicMapper
         );
     }
     world.delete_entity(savehelper).expect("Crash on cleanup");

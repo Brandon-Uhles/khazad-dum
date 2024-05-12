@@ -11,6 +11,9 @@ pub struct ParticleLifetime {
     pub lifetime_ms : f32,
 }
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct MagicMapper {}
+
 #[derive(Component, Serialize, Deserialize, Clone)]
 pub struct ProvidesFood {}
 
